@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="et-version" content="v49">
+<meta name="et-version" content="v51">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>English Time</title>
 <style>
@@ -282,6 +282,7 @@ body.dark header .logo{color:#9db8ff}
 .stdoor.open{background:#d9f5e8;border-color:#2fb59a}.stdoor.open .dr{animation:stpop .8s}
 .stscene{font-size:86px;line-height:1.1;margin:10px 0;background:#eef4ff;border-radius:20px;padding:14px}
 .sttext{font-size:30px;font-weight:bold;margin:12px 0}
+.pic{font-size:1.3em;cursor:pointer;display:inline-block;background:#fff6d9;border-radius:10px;padding:0 4px;margin:0 1px;line-height:1.25;vertical-align:middle}
 .stlisten{font-size:60px;background:#e9eefc;border:3px dashed #4a90e2;border-radius:20px;width:100%;margin:12px 0;padding:18px}
 .stlisten small{display:block;font-size:15px;color:var(--mute)}
 .stes{font-size:19px;color:#555;margin:6px 0}
@@ -442,20 +443,20 @@ var BUILTIN = {
   "4.º Ex.1 · Comida y sabores": [["sandwiches", "bocadillos", "🥪", 1], ["biscuits", "galletas", "🍪", 1], ["crisps", "patatas fritas (de bolsa)", "svg:crisps", 1], ["yoghurt", "yogur", "svg:yoghurt", 1], ["apples", "manzanas", "🍎", 1], ["grapes", "uvas", "🍇", 1], ["peppers", "pimientos", "svg:pepper", 1], ["lemons", "limones", "🍋", 1], ["hard", "duro", "🧱", 1], ["soft", "blando", "🧸", 1], ["salty", "salado", "🧂", 1], ["sweet", "dulce", "🍬", 1], ["sour", "ácido", "😖", 1], ["spicy", "picante", "🥵", 1], ["chocolate", "chocolate", "🍫", 1], ["cherries", "cerezas", "🍒", 1], ["bread", "pan", "🍞", 1]],
   "Animales": [
     ["dog","perro","🐶",1],["cat","gato","🐱",1],["bird","pájaro","🐦",1],["fish","pez","🐟",1],["horse","caballo","🐴",1],["cow","vaca","🐮",1],
-    ["pig","cerdo","🐷",1],["rabbit","conejo","🐰",1],["sheep","oveja","🐑",1],["duck","pato","🦆",1],["chicken","gallina","🐔",1],["mouse","ratón","🐭",1],
-    ["monkey","mono","🐵",2],["lion","león","🦁",2],["tiger","tigre","🐯",2],["elephant","elefante","🐘",2],["bear","oso","🐻",2],["frog","rana","🐸",2],
-    ["snake","serpiente","🐍",2],["turtle","tortuga","🐢",2],["penguin","pingüino","🐧",2],["panda","panda","🐼",2],["fox","zorro","🦊",2],["wolf","lobo","🐺",2],
-    ["bee","abeja","🐝",2],["ladybug","mariquita","🐞",2],["goat","cabra","🐐",2],["koala","koala","🐨",2],
-    ["giraffe","jirafa","🦒",3],["zebra","cebra","🦓",3],["kangaroo","canguro","🦘",3],["dolphin","delfín","🐬",3],["whale","ballena","🐳",3],["shark","tiburón","🦈",3],
-    ["octopus","pulpo","🐙",3],["crab","cangrejo","🦀",3],["butterfly","mariposa","🦋",3],["spider","araña","🕷️",3],["snail","caracol","🐌",3],["owl","búho","🦉",3],
-    ["parrot","loro","🦜",3],["squirrel","ardilla","🐿️",3],["eagle","águila","🦅",3],["swan","cisne","🦢",3],["crocodile","cocodrilo","🐊",3],["dinosaur","dinosaurio","🦖",3]
+    ["pig","cerdo","🐷",1],["rabbit","conejo","🐰",1],["mouse","ratón","🐭",1],
+    ["monkey","mono","🐵",2],["lion","león","🦁",2],["elephant","elefante","🐘",2],["bear","oso","🐻",2],["frog","rana","🐸",2],
+    ["snake","serpiente","🐍",2],
+    
+    ["dolphin","delfín","🐬",3],["shark","tiburón","🦈",3],
+    ["octopus","pulpo","🐙",3],["butterfly","mariposa","🦋",3],["spider","araña","🕷️",3],
+    ["parrot","loro","🦜",3]
   ],
   "Frutas y verduras": [
     ["apple","manzana","🍎",1],["banana","plátano","🍌",1],["orange","naranja","🍊",1],["grape","uva","🍇",1],["lemon","limón","🍋",1],["strawberry","fresa","🍓",1],
-    ["watermelon","sandía","🍉",1],["pear","pera","🍐",1],["pineapple","piña","🍍",1],["cherry","cereza","🍒",1],["peach","melocotón","🍑",1],["carrot","zanahoria","🥕",1],
-    ["tomato","tomate","🍅",2],["potato","patata","🥔",2],["corn","maíz","🌽",2],["onion","cebolla","🧅",2],["mushroom","champiñón","🍄",2],["broccoli","brócoli","🥦",2],
-    ["cucumber","pepino","🥒",2],["lettuce","lechuga","🥬",2],["eggplant","berenjena","🍆",2],["coconut","coco","🥥",2],["kiwi","kiwi","🥝",2],["avocado","aguacate","🥑",2],
-    ["mango","mango","🥭",3],["melon","melón","🍈",3],["garlic","ajo","🧄",3],["pumpkin","calabaza","🎃",3],["pepper","pimiento picante","🌶️",3],["peanut","cacahuete","🥜",3],["chestnut","castaña","🌰",3]
+    ["watermelon","sandía","🍉",1],["pear","pera","🍐",1],["pineapple","piña","🍍",1],["cherry","cereza","🍒",1],["carrot","zanahoria","🥕",1],
+    ["tomato","tomate","🍅",2],["potato","patata","🥔",2],["corn","maíz","🌽",2],["onion","cebolla","🧅",2],["mushroom","champiñón","🍄",2],
+    ["coconut","coco","🥥",2],["kiwi","kiwi","🥝",2],
+    ["mango","mango","🥭",3],["melon","melón","🍈",3],["garlic","ajo","🧄",3],["pepper","pimiento picante","🌶️",3]
   ],
   "Cosas": [
     ["ball","pelota","⚽",1],["book","libro","📖",1],["house","casa","🏠",1],["car","coche","🚗",1],["clock","reloj","⏰",1],["key","llave","🔑",1],["bed","cama","🛏️",1],
@@ -463,14 +464,14 @@ var BUILTIN = {
     ["computer","ordenador","💻",2],["television","televisión","📺",2],["bicycle","bicicleta","🚲",2],["bus","autobús","🚌",2],["train","tren","🚆",2],["plane","avión","✈️",2],
     ["boat","barco","⛵",2],["umbrella","paraguas","☂️",2],["glasses","gafas","👓",2],["shoe","zapato","👟",2],["shirt","camiseta","👕",2],["backpack","mochila","🎒",2],
     ["pencil","lápiz","✏️",2],["scissors","tijeras","✂️",2],
-    ["camera","cámara","📷",3],["guitar","guitarra","🎸",3],["piano","piano","🎹",3],["drum","tambor","🥁",3],["gift","regalo","🎁",3],["balloon","globo","🎈",3],
-    ["bell","campana","🔔",3],["cloud","nube","☁️",3],["rainbow","arcoíris","🌈",3],["mountain","montaña","⛰️",3],["fire","fuego","🔥",3],["heart","corazón","❤️",3],
-    ["rocket","cohete","🚀",3],["crown","corona","👑",3],["dress","vestido","👗",3],["socks","calcetines","🧦",3]
+    ["camera","cámara","📷",3],["guitar","guitarra","🎸",3],["piano","piano","🎹",3],["gift","regalo","🎁",3],["balloon","globo","🎈",3],
+    ["bell","campana","🔔",3],["cloud","nube","☁️",3],["rainbow","arcoíris","🌈",3],["fire","fuego","🔥",3],["heart","corazón","❤️",3],
+    ["dress","vestido","👗",3],["socks","calcetines","🧦",3]
   ],
   "Colores": [
     ["red","rojo","#e53935",1],["blue","azul","#1e88e5",1],["green","verde","#43a047",1],["yellow","amarillo","#fdd835",1],["orange","naranja","#fb8c00",1],["purple","morado","#8e24aa",1],["black","negro","#111111",1],["white","blanco","#ffffff",1],
     ["brown","marrón","#6d4c41",2],["pink","rosa","#ff69b4",2],["gray","gris","#9e9e9e",2],["gold","dorado","#d4af37",2],["silver","plateado","#c0c0c0",2],
-    ["turquoise","turquesa","#40e0d0",3],["beige","beige","#e8d9b5",3],["navy","azul marino","#1f2a6b",3],["lime","verde lima","#a4d233",3],["maroon","granate","#800000",3]
+    ["turquoise","turquesa","#40e0d0",3],["beige","beige","#e8d9b5",3]
   ],
   "Números": [
     ["one","uno","1",1],["two","dos","2",1],["three","tres","3",1],["four","cuatro","4",1],["five","cinco","5",1],["six","seis","6",1],["seven","siete","7",1],["eight","ocho","8",1],["nine","nueve","9",1],["ten","diez","10",1],
@@ -718,7 +719,7 @@ function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&am
 function norm(s){return String(s).toLowerCase().replace(/[^a-z ]/g,"").replace(/\s+/g," ").trim();}
 function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
 function load(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}
-var APP_VERSION="v49",APP_DATE="2 nov";
+var APP_VERSION="v51",APP_DATE="2 nov";
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));if(k!=="et_lastsave")localStorage.setItem("et_lastsave",String(Date.now()));}catch(e){}}
 
 /* ===== perfiles (varios niños en el mismo dispositivo) ===== */
@@ -1240,13 +1241,13 @@ function pgIntro(kind){
   pgStop();L=null;if(hasTTS)speechSynthesis.cancel();document.body.classList.remove("exam");document.body.removeAttribute("data-st");
   var r=pgRec(),tot=pgPool().length,h='<button class="ghost" id="homebtn">← Atrás</button>';
   if(kind==="reto"){
-    h+='<div class="card center"><div class="big">⏱️</div><h2>Reto</h2><p>Une cada palabra en español con su pareja en inglés. ¡Cuántas puedes en poco tiempo!</p><p class="small">Elige el tiempo:</p>'+
-      [30,60,90].map(function(s){return '<button class="green pgtime" data-s="'+s+'" style="font-size:20px">'+s+' segundos<small style="display:block;font-weight:normal;font-size:13px">'+pgLine("reto"+s,tot)+'</small></button>';}).join("")+'</div>';
+    h+='<div class="card center"><div class="big">⏱️</div><h2>Reto</h2><p>Une cada palabra en español con su pareja en inglés. ¡Cuántas puedes en poco tiempo!</p><p class="small">Elige el tiempo, o ♾️ sin límite:</p>'+
+      [30,60,90].map(function(s){return '<button class="green pgtime" data-s="'+s+'" style="font-size:20px">'+s+' segundos<small style="display:block;font-weight:normal;font-size:13px">'+pgLine("reto"+s,tot)+'</small></button>';}).join("")+'<button class="red pgtime" data-s="0" style="font-size:20px">♾️ Ilimitado<small style="display:block;font-weight:normal;font-size:13px">Sin tiempo: termina al primer error · '+pgLine("racha",tot)+'</small></button></div>';
   }else{
     h+='<div class="card center"><div class="big">🔥</div><h2>Racha</h2><p>Une parejas sin parar. No hay tiempo, pero ¡termina al primer error!</p><p class="small">'+pgLine("racha",tot)+'</p><button class="red" id="pgstart" style="font-size:20px">▶ Empezar</button></div>';
   }
   main.innerHTML=h;$("homebtn").onclick=wordsScreen;
-  main.querySelectorAll(".pgtime").forEach(function(b){b.onclick=function(){pgStart("reto",+b.getAttribute("data-s"));};});
+  main.querySelectorAll(".pgtime").forEach(function(b){b.onclick=function(){var t=+b.getAttribute("data-s");if(t===0)pgStart("racha",0);else pgStart("reto",t);};});
   if($("pgstart"))$("pgstart").onclick=function(){pgStart("racha",0);};
 }
 function pgStart(kind,secs){
@@ -3083,6 +3084,26 @@ function storyMap(){
   }
 }
 function stShuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+
+/* ===== pictogramas dentro del texto de las historias ===== */
+var PICTO={"ice cream":"🍦","hamster":"🐹","cat":"🐱","dog":"🐶","dogs":"🐶","cows":"🐄","cow":"🐄","sheep":"🐑","hens":"🐔","hen":"🐔","horse":"🐴","monkeys":"🐒","monkey":"🐒","giraffes":"🦒","giraffe":"🦒","lions":"🦁","lion":"🦁","penguin":"🐧","fish":"🐟","bird":"🐦","rabbit":"🐰","dragon":"🐉","dragons":"🐉","dinosaur":"🦖","elephants":"🐘","elephant":"🐘","robot":"🤖","snowman":"⛄",
+ "sandwiches":"🥪","sandwich":"🥪","apples":"🍎","apple":"🍎","banana":"🍌","bananas":"🍌","lemons":"🍋","carrots":"🥕","carrot":"🥕","cake":"🎂","pie":"🥧","pizza":"🍕","pizzas":"🍕","cheese":"🧀","tomatoes":"🍅","tomato":"🍅","mushrooms":"🍄","eggs":"🥚","milk":"🥛","bread":"🍞","watermelon":"🍉","orange":"🍊",
+ "umbrella":"☂️","bike":"🚲","bell":"🔔","key":"🔑","torch":"🔦","candles":"🕯️","tent":"⛺","fire":"🔥","book":"📖","books":"📚","pencil":"✏️","notebook":"📓","bag":"🎒","ball":"⚽","guitar":"🎸","lamps":"💡","rocket":"🚀","moon":"🌙","stars":"⭐","sun":"☀️","scarf":"🧣","gloves":"🧤","jumper":"🧥","trousers":"👖","shorts":"🩳","hat":"🧢","present":"🎁","presents":"🎁","door":"🚪","wind":"💨","sea":"🌊","lake":"🏞️","beach":"🏖️","school":"🏫","park":"🌳","house":"🏠","bus":"🚌","flowers":"🌸","roses":"🌹","sunflowers":"🌻","seed":"🌱","mum":"👩","dad":"👨","sister":"👧","brother":"👦","grandma":"👵","grandpa":"👴","girl":"👧","boy":"👦","doctor":"🧑‍⚕️","sandcastle":"🏰","football":"⚽","TV":"📺","phone":"📱","mouth":"👄","eyes":"👀","hand":"✋","snow":"❄️","prize":"🏆","race":"🏁","playground":"🛝","children":"🧒","sofa":"🛋️","lights":"💡","lamp":"💡","mountain":"⛰️","stone":"🪨","stones":"🪨","box":"📦","planets":"🪐","basket":"🧺","picnic":"🧺","bed":"🛏️","teacher":"🧑‍🏫","stars":"⭐","star":"⭐","fish":"🐟","tea":"🍵","chocolate":"🍫","juice":"🧃","water":"💧","rain":"🌧️","storm":"⛈️"};
+var PICTO_RE=new RegExp("\\b("+Object.keys(PICTO).sort(function(a,b){return b.length-a.length;}).join("|")+")\\b","gi");
+function pictoize(en){
+  return esc(en).replace(PICTO_RE,function(m){
+    var k=m.toLowerCase(),e=PICTO[k]||PICTO[m];if(!e)return m;
+    if(/^(snow)$/i.test(m)&&false)return m;
+    return '<span class="pic" data-w="'+m+'">'+e+'</span>';
+  });
+}
+function bindPictos(){
+  main.querySelectorAll(".pic").forEach(function(el){el.onclick=function(){
+    if(el.getAttribute("data-on"))return;var e=el.innerHTML,w=el.getAttribute("data-w");
+    el.setAttribute("data-on","1");el.innerHTML='<b style="font-size:.8em">'+w+'</b>';speak(w,0.9,true);
+    setTimeout(function(){el.innerHTML=e;el.removeAttribute("data-on");},1600);
+  };});
+}
 function stTop(){return '<div class="sttop"><button class="ghost" id="stback">← Mapa</button><button class="ghost" id="sthome">🏠 Inicio</button></div>';}
 function stBar(){
   var m=stMode();
@@ -3108,7 +3129,7 @@ function stPage(){
   if(ST.pi>=s.p.length){if(ST.replay||!ST.qs.length){storyEnd();}else{ST.qi=0;stQuestion();}return;}
   var pg=s.p[ST.pi],pct=Math.round(ST.pi/(s.p.length+ST.qs.length)*100);
   var txt=(m==="listen")?'<button class="stlisten" id="stsay">🔊<small>Toca para oír otra vez</small></button>':
-    '<div class="sttext" id="sttext" style="font-size:'+(pg[1].length>110?'21':pg[1].length>60?'25':'30')+'px'+(pg[1].length>60?';font-weight:600;text-align:left':'')+'">'+esc(pg[1])+'</div>'+(m==="read"?'<div class="center"><button class="alt" id="stsay" style="margin:0">🔊 Oír</button></div>':'<div class="center"><button class="alt" id="stsay" style="margin:0">🔊 Otra vez</button></div>');
+    '<div class="sttext" id="sttext" style="font-size:'+(pg[1].length>110?'21':pg[1].length>60?'25':'30')+'px'+(pg[1].length>60?';font-weight:600;text-align:left':'')+'">'+(pg[0]?esc(pg[1]):pictoize(pg[1]))+'</div>'+(m==="read"?'<div class="center"><button class="alt" id="stsay" style="margin:0">🔊 Oír</button></div>':'<div class="center"><button class="alt" id="stsay" style="margin:0">🔊 Otra vez</button></div>');
   main.innerHTML=''+stTop()+'<div class="card center"><div class="progress"><i style="width:'+pct+'%"></i></div>'+
     (pg[0]?'<div class="stscene">'+pg[0]+'</div>':'')+txt+
     '<div class="center"><button class="ghost" id="stes">🇪🇸 Ver en español</button></div><div class="stes" id="stesbox" style="display:'+(ST.es?"block":"none")+'">'+esc(pg[2])+'</div>'+
@@ -3117,7 +3138,7 @@ function stPage(){
   $("stsay").onclick=function(){speak(pg[1],0.9,true);};
   $("stes").onclick=function(){ST.es=!ST.es;$("stesbox").style.display=ST.es?"block":"none";};
   $("stnext").onclick=function(){ST.pi++;stPage();};
-  stBindBar(stPage);
+  stBindBar(stPage);bindPictos();
   if(m!=="read")speak(pg[1],0.9,true);
 }
 function stQuestion(){
