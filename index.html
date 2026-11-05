@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="et-version" content="v51">
+<meta name="et-version" content="v54">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>English Time</title>
 <style>
@@ -297,6 +297,17 @@ body.dark header .logo{color:#9db8ff}
 .shelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px}
 .book{margin:0;padding:8px;background:#2fb59a;color:#fff;border-radius:10px;display:flex;flex-direction:column;align-items:center;box-shadow:0 4px 0 rgba(0,0,0,.2)}
 .book .bi{font-size:40px}.book small{font-size:12px;line-height:1.1}
+
+  .chars{display:flex;gap:14px;justify-content:center;margin:10px 0;flex-wrap:wrap}
+  .chr{border:3px solid var(--line);border-radius:16px;padding:8px 16px;text-align:center;background:var(--card,#fff)}
+  .chr b{display:block;font-size:22px}.chr span{font-size:60px;line-height:1.2}
+  .exerr{padding:10px 0!important}.exerr .eq{font-weight:bold;margin-bottom:4px}
+  .exerr .eg{font-size:17px}.exerr .gbad{color:#c62828;font-weight:bold;text-decoration:line-through}.exerr .gblank{color:#888}
+  .exerr .ee{font-size:17px;margin-top:2px}.exerr .eh{font-size:15px;margin-top:4px;color:#8a5a00;background:#fff8e1;border-radius:8px;padding:4px 8px;display:inline-block}
+  .demobar{background:#ede7f6;border:2px dashed #7e57c2;border-radius:10px;padding:6px 10px;margin:6px 0;text-align:center;font-size:14px}
+  .lessons.two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}.lessons.two button{margin:0;font-size:18px}
+  .lessons button.dim{opacity:.55}
+  .redo{display:inline-block;margin-top:6px;font-size:13px;text-decoration:underline}
 </style>
 </head>
 <body>
@@ -567,19 +578,32 @@ function groupDone(g){var n=0;g.units.forEach(function(id){n+=partsDone(id);});r
 function groupSel(g,part){return {lessons:g.units.slice(),sections:[],parts:part==="all"?["p1","p2","p3","p4"]:[part],grp:g.id};}
 function groupMenu(g){
   L=null;if(hasTTS)speechSynthesis.cancel();document.body.classList.remove("exam");document.body.removeAttribute("data-st");
-  var defs=[["p1","🔤 Parte 1: Palabras"],["p2","🧩 Parte 2: Frases"],["p3","💬 Parte 3: Preguntas y respuestas"],["p4","🎮 Parte 4: Juegos de letras"],["all","🌟 Todo seguido"]];
-  var btns=defs.map(function(d){var s=groupSel(g,d[0]),n=groupSteps(mergeLessons(s),s).length;return n?'<button data-gpart="'+d[0]+'">'+d[1]+'<small>'+n+' ejercicios · unas cuantas de cada unidad</small></button>':"";}).join("");
-  var ub=groupUnits(g).map(function(u,i){return '<button data-unit="'+i+'">'+u.icon+' '+esc(u.title)+'<small>'+esc(u.desc)+pbar(unitPct(u))+'</small></button>';}).join("");
+  var RS=rsAll(),wk=weakOf(g.units).length;
+  function saved(k){var r=RS[k];return (r&&r.steps&&r.i<r.steps.length)?r:null;}
+  function box(part,label,sub){
+    var r=saved("plan:"+g.id+"|"+part);
+    return '<button data-gpart="'+part+'">'+label+'<small>'+(r?'▶ Continuar · '+rsLine(r):sub)+'</small>'+(r?'<span class="redo" data-redo="'+part+'">↻ Empezar de nuevo</span>':'')+'</button>';
+  }
+  var xr=saved("exam:"+g.id);
   main.innerHTML='<button class="ghost" id="homebtn">← Inicio</button>'+
-    '<div class="card"><h2>'+g.icon+' '+esc(g.title)+'</h2><p class="small">'+esc(g.desc)+'</p>'+pbar(groupPct(g))+
-    '<p class="small" style="margin:6px 0"><b>Opción A:</b> elige una unidad y estudia todo lo de esa parte del libro.</p><div class="lessons">'+ub+'</div></div>'+
-    '<div class="card"><h2>🌟 Opción B: todo el examen junto</h2><p class="small">Mezcla las 4 unidades. Mejor cuando ya se las sabe por separado.</p><div class="lessons">'+btns+'</div>'+
-    '<div class="tools" style="margin-top:10px"><button class="red" id="gexam">📝 Prueba final de este examen</button><button class="alt" id="gwords">🎯 Palabras sueltas del examen</button></div></div>'+levelsHtml();
+    '<div class="card"><h2>'+g.icon+' '+esc(g.title)+'</h2>'+pbar(groupPct(g))+
+    '<div class="lessons" style="margin-top:10px">'+box("v","🔤 Vocabulario","Escribir las palabras del examen")+box("f","🧩 Frases, preguntas y respuestas","Completar, ordenar y responder")+'</div>'+
+    '<div class="lessons two">'+
+    '<button id="gexam">📝 Prueba final<small>'+(xr?'▶ Continuar · '+rsLine(xr):'unas 50 preguntas')+'</small>'+(xr?'<span class="redo" id="gexamnew">↻ Nueva prueba</span>':'')+'</button>'+
+    '<button id="grev" class="'+(wk?'':'dim')+'">🔁 Repaso<small>'+(wk?wk+(wk===1?' cosa por repasar':' cosas por repasar'):'Nada pendiente 🎉')+'</small></button></div>'+(DEMO?'<button class="alt" id="gdemo" style="width:100%;margin-top:10px">⚡ Terminar con respuestas de ejemplo</button>':'')+'</div>'+levelsHtml();
   $("homebtn").onclick=home;bindLevels(function(){groupMenu(g);});
-  main.querySelectorAll("[data-unit]").forEach(function(b){b.onclick=function(){lessonMenu(groupUnits(g)[+b.getAttribute("data-unit")]);};});
-  main.querySelectorAll("[data-gpart]").forEach(function(b){b.onclick=function(){startPlan(groupSel(g,b.getAttribute("data-gpart")));};});
-  $("gexam").onclick=function(){if(!startExam(groupSel(g,"all")))alert("Con ese nivel hay pocas preguntas. Marca más niveles.");};
-  $("gwords").onclick=function(){setSecs([g.sections[0]]);home();};
+  main.querySelectorAll("[data-gpart]").forEach(function(b){b.onclick=function(e){
+    var p=b.getAttribute("data-gpart"),k="plan:"+g.id+"|"+p;
+    if(e.target.getAttribute&&e.target.getAttribute("data-redo")){startPlan(groupSel(g,p));return;}
+    if(saved(k)){rsResume(k);return;}
+    startPlan(groupSel(g,p));
+  };});
+  $("gexam").onclick=function(e){
+    if(e.target.id==="gexamnew"||!xr){if(!startExam(groupSel(g,"all")))alert("Con ese nivel hay pocas preguntas. Marca más niveles.");return;}
+    rsResume("exam:"+g.id);
+  };
+  if($("gdemo"))$("gdemo").onclick=function(){demoExamResult(groupSel(g,"all"));};
+  $("grev").onclick=function(){if(!wk){showToast("🎉 No tienes nada pendiente de repasar","ok");return;}startReview(g.units);};
 }
 
 /* ===== EXTRAS DEL EXAMEN (ordenar listas, crucigrama con pistas, tabla de gustos) ===== */
@@ -695,6 +719,71 @@ LESSONS.push({
 });
 GROUPS.push({id:"tobe",icon:"🧩",title:"4.º · Refuerzo: verbo to be",desc:"Incluye: quién es quién (he, she, they…) y am / is / are con preguntas de sí o no",units:["tb_basic"],sections:[]});
 
+/* ===== v52: preguntas con nombres (María → she, Pedro → he…) y cuadros ===== */
+(function(){
+  function les(id){return LESSONS.filter(function(l){return l.id===id;})[0];}
+  var F={lemons:["los limones",1],apples:["las manzanas",1],grapes:["las uvas",1],peppers:["los pimientos",1],sandwiches:["los bocadillos",1],biscuits:["las galletas",1],crisps:["las patatas fritas",1],yoghurt:["el yogur",0],cherries:["las cerezas",1],bread:["el pan",0],chocolate:["el chocolate",0]};
+  function gusta(f){return F[f][1]?"le gustan":"le gusta";}
+  var FEM=["María","Ana","Laura"];
+  function pr(n){return FEM.indexOf(n)>=0?"she":"he";}
+  function wr(p){return p==="she"?"he":"she";}
+  function dq(n,mid,f,esq){var p=pr(n),o=wr(p);return {q:"Does "+n+" "+mid+" "+f+"?",es:esq,answers:["Yes, "+p+" does.","No, "+p+" doesn't."],wrong:["Yes, "+o+" does.","No, "+o+" doesn't."],nm:1};}
+  function tq(q,es,answers,wrong){return {q:q,es:es,answers:answers,wrong:wrong,nm:1};}
+  var u1=les("ex4_food"),u2=les("ex4_like"),u3=les("ex4_some"),tb=les("tb_basic");
+  /* comida y sabores: ya son cosas → it / they */
+  u1.qa.forEach(function(q){if(/^(yes|no)\b/i.test(q.answers[0]))q.nm=1;});
+  /* Does he / she like… */
+  [["María","lemons"],["Pedro","grapes"],["Ana","biscuits"],["Tom","crisps"],["Laura","apples"],["Juan","sandwiches"],["María","yoghurt"],["Pedro","peppers"]].forEach(function(c){
+    u2.qa.push(dq(c[0],"like",c[1],"¿A "+c[0]+" "+gusta(c[1])+" "+F[c[1]][0]+"?"));
+  });
+  u2.qa.push(tq("Do María and Pedro like apples?","¿A María y a Pedro les gustan las manzanas?",["Yes, they do.","No, they don't."],["Yes, they does.","Yes, she does."]));
+  u2.qa.push(tq("Do Ana and Tom like grapes?","¿A Ana y a Tom les gustan las uvas?",["Yes, they do.","No, they don't."],["Yes, they does.","Yes, he does."]));
+  /* some / any */
+  [["Pedro","cherries"],["María","apples"],["Ana","bread"],["Tom","chocolate"],["Laura","yoghurt"],["Juan","crisps"]].forEach(function(c){
+    u3.qa.push(dq(c[0],"want any",c[1],"¿"+c[0]+" quiere "+F[c[1]][0].replace(/^(el|la|los|las) /,"")+"?"));
+  });
+  /* verbo to be */
+  function bq(q,es,p,aux){
+    var neg=aux==="is"?"isn't":"aren't",o=p==="she"?"he":p==="he"?"she":p==="it"?"they":"it",ao=(o==="they")?"are":"is";
+    return {q:q,es:es,answers:["Yes, "+p+" "+aux+".","No, "+p+" "+neg+"."],wrong:["Yes, "+o+" "+ao+".","Yes, "+p+" "+(aux==="is"?"are":"is")+"."],nm:1};
+  }
+  [["Is María your friend?","¿María es tu amiga?","she","is"],["Is Pedro a boy?","¿Pedro es un niño?","he","is"],["Are María and Pedro friends?","¿María y Pedro son amigos?","they","are"],
+   ["Is Ana nine?","¿Ana tiene nueve años?","she","is"],["Is Tom happy?","¿Tom está contento?","he","is"],["Is the dog big?","¿El perro es grande?","it","is"],["Are the cats black?","¿Los gatos son negros?","they","are"]].forEach(function(c){tb.qa.push(bq(c[0],c[1],c[2],c[3]));});
+
+  /* cuadros: Does María like…? / Does Pedro want any…? */
+  function tableScenes(tbl,fn,verb,symOk,symNo){
+    var out=[];
+    tbl.people.forEach(function(p){fn.forEach(function(f,k){
+      var yes=!!p.f[k],mid=verb==="like"?"like":"want any",esq=verb==="like"?("¿A "+p.n+" "+gusta(f)+" "+F[f][0]+"?"):("¿"+p.n+" quiere "+F[f][0].replace(/^(el|la|los|las) /,"")+"?");
+      var note="En la tabla, "+p.n+" tiene "+(yes?symOk:symNo)+" con "+f+": "+(yes?(verb==="like"?"sí le gusta.":"sí quiere."):(verb==="like"?"no le gusta.":"no quiere."));
+      out.push({pic:"",tbl:tbl,q:"Does "+p.n+" "+mid+" "+f+"?",es:esq+" (mira la tabla)",sub:p.s,aux:"does",yes:yes,nm:1,note:note});
+      if(k%2===(p.s==="she"?0:1)){
+        out.push({pic:"",tbl:tbl,q:"Does "+p.s+" "+mid+" "+f+"?",es:esq.replace("¿A "+p.n,"¿A "+(p.s==="she"?"ella":"él")).replace("¿"+p.n,"¿"+(p.s==="she"?"Ella":"Él"))+" ("+(p.s==="she"?"she":"he")+" = "+p.n+")",sub:p.s,aux:"does",yes:yes,note:note});
+      }
+    });});
+    return out;
+  }
+  var tA={foods:["[[crisps]]","🥪","🍋","🍪","[[yoghurt]]"],people:[{n:"María",s:"she",f:[1,1,0,1,0]},{n:"Pedro",s:"he",f:[1,0,1,1,1]}]};
+  var tB={foods:["🍎","🍇","[[pepper]]","🍪","🥪"],people:[{n:"Ana",s:"she",f:[1,0,0,1,1]},{n:"Tom",s:"he",f:[0,1,1,0,1]}]};
+  u2.scenes=tableScenes(tA,["crisps","sandwiches","lemons","biscuits","yoghurt"],"like","😊","☹️").concat(tableScenes(tB,["apples","grapes","peppers","biscuits","sandwiches"],"like","😊","☹️"));
+  var tC={ok:"✅",no:"❌",foods:["🍒","🥪","🍫","🍎","[[yoghurt]]"],people:[{n:"María",s:"she",f:[1,0,1,1,0]},{n:"Pedro",s:"he",f:[0,1,0,1,1]}]};
+  var tD={ok:"✅",no:"❌",foods:["🍞","🍪","🍒","🥪","🍫"],people:[{n:"Ana",s:"she",f:[0,1,1,0,1]},{n:"Tom",s:"he",f:[1,0,0,1,0]}]};
+  u3.scenes=tableScenes(tC,["cherries","sandwiches","chocolate","apples","yoghurt"],"want","✅","❌").concat(tableScenes(tD,["bread","biscuits","cherries","sandwiches","chocolate"],"want","✅","❌"));
+  /* to be: los dibujos de personas ahora llevan nombre */
+  var keep=tb.scenes.filter(function(x){return x.pic&&!/^(👧|👦|👧👦)$/.test(x.pic);});
+  keep.forEach(function(x){x.nm=1;});
+  var chM={n:"María",e:"👧"},chP={n:"Pedro",e:"👦"};
+  tb.scenes=keep.concat([
+    {chars:[chM],q:"Is María a girl?",es:"¿María es una niña?",sub:"she",aux:"is",yes:true,nm:1,note:"María es una niña."},
+    {chars:[chP],q:"Is Pedro a girl?",es:"¿Pedro es una niña?",sub:"he",aux:"is",yes:false,nm:1,note:"Pedro es un niño, no una niña."},
+    {chars:[chM,chP],q:"Are María and Pedro friends?",es:"¿María y Pedro son amigos?",sub:"they",aux:"are",yes:true,nm:1,note:"Dos niños juntos: they are."},
+    {chars:[chM],q:"Is she a girl?",es:"¿Ella es una niña? (she = María)",sub:"she",aux:"is",yes:true,note:"María es una niña."},
+    {chars:[chP],q:"Is he a girl?",es:"¿Él es una niña? (he = Pedro)",sub:"he",aux:"is",yes:false,note:"Pedro es un niño, no una niña."},
+    {chars:[chM,chP],q:"Are they friends?",es:"¿Son amigos? (they = María y Pedro)",sub:"they",aux:"are",yes:true,note:"Dos niños juntos: they are."}
+  ]);
+})();
+
+
 /* ===== utilidades ===== */
 /* ===== iconos propios (se ven igual en todos los dispositivos) ===== */
 var ICO={
@@ -717,9 +806,19 @@ function $(id){return document.getElementById(id);}
 function esHtml(es){if(!es||(L&&L.exam))return "";return '<div class="es esbox"><button class="ghost esbtn" data-es="'+esc(es)+'">👁 Ver en español</button></div>';}
 function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 function norm(s){return String(s).toLowerCase().replace(/[^a-z ]/g,"").replace(/\s+/g," ").trim();}
+/* para comparar lo que escribe: sin mayúsculas, y don't = do not, I'm = I am, etc. */
+function nrm(s){
+  var t=String(s).toLowerCase().replace(/[\u2019\u2018`\u00b4]/g,"'");
+  t=t.replace(/\bcan't\b/g,"can not").replace(/\bcannot\b/g,"can not").replace(/\bwon't\b/g,"will not").replace(/\bshan't\b/g,"shall not")
+     .replace(/n't\b/g," not").replace(/\b(i)'m\b/g,"$1 am").replace(/\b(you|we|they)'re\b/g,"$1 are")
+     .replace(/\b(he|she|it|that|there|what|who|where|here)'s\b/g,"$1 is").replace(/\b(i|you|we|they)'ve\b/g,"$1 have")
+     .replace(/\b(i|you|he|she|it|we|they)'ll\b/g,"$1 will");
+  return t.replace(/[^a-z ]/g,"").replace(/\s+/g," ").trim();
+}
 function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
 function load(k,d){try{var v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}}
-var APP_VERSION="v51",APP_DATE="2 nov";
+var DEMO=false;
+var APP_VERSION="v54",APP_DATE="5 nov";
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));if(k!=="et_lastsave")localStorage.setItem("et_lastsave",String(Date.now()));}catch(e){}}
 
 /* ===== perfiles (varios niños en el mismo dispositivo) ===== */
@@ -1077,7 +1176,7 @@ function stickerScreen(){
 }
 
 /* ===== marcador / progreso ===== */
-var TYPENAMES={esorder:"Ordenar (español → inglés)",gaptype:"Completar escribiendo",seq:"Ordenar meses y días",hearpick:"Escuchar y elegir",tf:"Verdadero o falso",match:"Unir",write:"Escribir",speak:"Hablar",order:"Ordenar frases",gap:"Completar frases",dictation:"Dictado",qachoose:"Elegir la respuesta",qaorder:"Ordenar la respuesta",qatype:"Responder escribiendo",scenechoose:"Dibujo y pregunta (elegir)",scenetype:"Dibujo y pregunta (escribir)",letters:"Letras que faltan",memory:"Memoria",search:"Sopa de letras",cross:"Crucigrama"};
+var TYPENAMES={es2en:"Español → inglés (escribir)",wdict:"Dictado de palabras",es2pick:"¿Cómo se dice? (elegir)",esquiz:"¿Cómo se dice la frase?",esorder:"Ordenar (español → inglés)",gaptype:"Completar escribiendo",seq:"Ordenar meses y días",hearpick:"Escuchar y elegir",tf:"Verdadero o falso",match:"Unir",write:"Escribir",speak:"Hablar",order:"Ordenar frases",gap:"Completar frases",dictation:"Dictado",qachoose:"Elegir la respuesta",qaorder:"Ordenar la respuesta",qatype:"Responder escribiendo",scenechoose:"Dibujo y pregunta (elegir)",scenetype:"Dibujo y pregunta (escribir)",letters:"Letras que faltan",memory:"Memoria",search:"Sopa de letras",cross:"Crucigrama"};
 var PROG={types:{},days:{},lessons:{},weak:[],exams:[],mastered:[],stickers:{},known:{}};
 function today(){var d=new Date();return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2);}
 function markDay(){PROG.days[today()]=1;psave("et_prog",PROG);}
@@ -1118,8 +1217,8 @@ function progressScreen(){
     (weak.length?'<div class="fb info">💡 Para repasar más: <b>'+weak.map(function(t){return esc(TYPENAMES[t]||t);}).join("</b> y <b>")+'</b></div>':"")+'</div>';
   var wk=PROG.weak.slice(0,12).map(function(x){var lab=stepLabel(x);return '<li><span class="badge" title="aciertos seguidos">'+dots(x)+'</span> '+esc(lab.txt)+' <button class="sp" data-say="'+esc(lab.say)+'">🔊</button></li>';}).join("");
   var masteredCard='<div class="card"><h2>✅ Ya dominadas ('+PROG.mastered.length+')</h2>'+(PROG.mastered.length?'<p class="small">Las acertó a la primera '+goal()+' veces. Ya no hay deficiencia aquí.</p><ul class="clues">'+PROG.mastered.slice(-10).reverse().map(function(m){return '<li>✅ '+esc(m.txt)+' <span class="small">· '+esc(m.d.slice(5).replace("-","/"))+'</span></li>';}).join("")+'</ul>':'<p class="small">Aquí aparecerá lo que vaya dominando.</p>')+'</div>';
-  var settingsCard='<div class="card"><h2>⚙️ Ajustes</h2><p class="small">Una cosa deja de estar «en repaso» cuando la acierta <b>a la primera</b> esta cantidad de veces:</p><div class="center">'+
-    [3,4,5].map(function(g){return '<button class="'+(goal()===g?"green":"ghost")+'" data-goal="'+g+'">'+g+' veces</button>';}).join("")+'</div>'+
+  var settingsCard='<div class="card"><h2>⚙️ Ajustes</h2><p class="small">Una cosa deja de estar «en repaso» cuando la acierta <b>a la primera</b> esta cantidad de veces <b>seguidas</b>:</p><div class="center">'+
+    [2,3,4].map(function(g){return '<button class="'+(goal()===g?"green":"ghost")+'" data-goal="'+g+'">'+g+' veces</button>';}).join("")+'</div>'+
     '<p class="small">Volumen de los sonidos:</p><div class="center">'+[[1,"🔈 Bajo"],[2,"🔉 Medio"],[3,"🔊 Alto"]].map(function(v){return '<button class="'+(load("et_vol",2)===v[0]?"green":"ghost")+'" data-vol="'+v[0]+'">'+v[1]+'</button>';}).join("")+
     '</div><div class="center"><button class="alt" id="testok">▶ Probar acierto</button><button class="alt" id="testbad">▶ Probar fallo</button></div></div>';
   var exCard='<div class="card"><h2>📝 Mis pruebas</h2>'+(PROG.exams.length?PROG.exams.slice(-5).reverse().map(function(e){var pc=Math.round(e.s/e.m*100);return '<div class="bar"><span class="lab">'+esc(e.d.slice(5).replace("-","/"))+' · '+esc(String(e.t).slice(0,22))+'</span><span class="tr"><i class="'+(pc>=80?"hi":pc>=50?"mid":"")+'" style="width:'+pc+'%"></i></span><span class="pc"><b>'+String(e.n).replace(".",",")+'</b> / 10</span></div>';}).join(""):'<p class="small">Todavía no ha hecho ninguna prueba final.</p>')+'</div>';
@@ -1156,7 +1255,7 @@ main.addEventListener("click",function(e){
 /* ===== juegos fáciles en palabras sueltas: se bloquean cuando ya los domina ===== */
 var EASYG={match:"Unir",memory:"Memoria",search:"Sopa de letras"},WRITEG={write:"Escribir",letters:"Letras que faltan",cross:"Crucigrama"};
 function easyState(sec){var e=PROG.easy||(PROG.easy={});return e[sec]||(e[sec]={perf:{},lock:{},done:{}});}
-function easyLocked(sec,mode){return !!(PROG.easy&&PROG.easy[sec]&&PROG.easy[sec].lock&&PROG.easy[sec].lock[mode]);}
+function easyLocked(sec,mode){if(DEMO)return false;return !!(PROG.easy&&PROG.easy[sec]&&PROG.easy[sec].lock&&PROG.easy[sec].lock[mode]);}
 function anyLock(x){return Object.keys(x.lock).some(function(k){return x.lock[k];});}
 function easyFinish(){
   var only=L&&L.only,sec=L&&L.title;if(!only||!sec||(L.part!==null&&L.part!==undefined))return "";
@@ -1381,10 +1480,11 @@ function home(){
     '<div class="nh-big"><button class="nh-bi'+(nw?"":" off")+'" id="revbtn">'+im('b1')+'<span class="live cnt">('+nw+')</span></button>'+
     '<button class="nh-bi" id="wordsbtn">'+im('b2')+'</button>'+
     '<button class="nh-bi" id="stbtn">'+im('b3')+'<span class="live pill">Historia '+stc+' de '+ST_TOTAL+'</span></button></div>'+
-    '<p class="small center" style="margin:6px 0 14px">English Time · '+APP_VERSION+'</p>';
+    '<p class="small center" style="margin:6px 0 14px">English Time · '+APP_VERSION+'</p>'+(DEMO?'<div class="demobar">🧪 <b>VERSIÓN DEMO</b> · todo desbloqueado, solo para ti</div>':'');
   $("lechead").onclick=function(){var o=$("lec").classList.toggle("open");psave("et_lecopen",o);};
   $("stbtn").onclick=storyMap;$("wordsbtn").onclick=wordsScreen;$("progbtn").onclick=progressScreen;
   $("revbtn").onclick=function(){if(!PROG.weak.length){showToast("🎉 No tienes nada pendiente de repasar","ok");return;}startReview();};
+  var rsh="";if(rsh){main.insertAdjacentHTML("afterbegin",rsh);rsBindHome();}
   main.querySelectorAll("[data-lesson]").forEach(function(b){b.onclick=function(){lessonMenu(LESSONS[+b.getAttribute("data-lesson")]);};});
   main.querySelectorAll("[data-group]").forEach(function(b){b.onclick=function(){var g=GROUPS[+b.getAttribute("data-group")];if(g.units.length===1)lessonMenu(groupUnits(g)[0]);else groupMenu(g);};});
   if($("runplan"))$("runplan").onclick=function(){startPlan(pload("et_plan",null));};
@@ -1406,6 +1506,36 @@ function delSection(){
   else alert("Solo se pueden borrar las secciones que has creado tú.");
 }
 
+
+/* ===== v52: guardar el avance para continuar donde se quedó ===== */
+var PARTMAP={v:"p1",f:"p2"};
+function rsAll(){return pload("et_resume",{});}
+function rsPut(k,v){var a=rsAll();if(v)a[k]=v;else delete a[k];psave("et_resume",a);}
+function rsSave(){
+  if(!L||!L.rkey)return;
+  try{rsPut(L.rkey,{t:Date.now(),kind:L.exam?"exam":(L.plan&&L.part==="plan"?"plan":"lesson"),lid:(L.les&&L.les.id)||null,part:L.rpart,sel:L.plan||null,steps:L.steps,i:L.i,stars:L.stars||0,title:L.title,struggled:L.struggled||[],examLog:L.examLog||null});}catch(e){}
+}
+function rsResume(k){
+  var r=rsAll()[k];if(!r||!r.steps||r.i>=r.steps.length){rsPut(k,null);return false;}
+  var les=r.kind==="lesson"?lessonById(r.lid):mergeLessons(r.sel);
+  if(!les){rsPut(k,null);return false;}
+  L={title:r.title,les:les,steps:r.steps,i:r.i,stars:r.stars||0,part:r.kind==="exam"?"exam":(r.kind==="plan"?"plan":r.part),only:null,struggled:r.struggled||[],rkey:k,rpart:r.part};
+  if(r.kind==="plan")L.plan=r.sel;
+  if(r.kind==="exam"){L.exam=true;L.examLog=r.examLog||[];L.examBusy=false;L.plan=r.sel;}
+  renderStep();return true;
+}
+function rsLine(r){
+  function isEx(x){return !NOSCORE[x.t]&&x.t!=="examintro";}
+  var st=r.steps[r.i]||{},n=r.steps.filter(isEx).length,d=r.steps.slice(0,r.i).filter(isEx).length;
+  return (st.rd?'Ronda '+st.rd+' de '+st.rds+' · ':'')+(r.kind==="exam"?'pregunta ':'ejercicio ')+Math.min(d+1,n)+' de '+n;
+}
+function rsHomeHtml(){
+  var a=rsAll(),ks=Object.keys(a).filter(function(k){return a[k]&&a[k].steps&&a[k].i<a[k].steps.length;}).sort(function(x,y){return a[y].t-a[x].t;}).slice(0,2);
+  if(!ks.length)return "";
+  return '<div class="card" style="border:3px solid var(--sun)"><h2>▶ Continuar donde lo dejaste</h2>'+ks.map(function(k){var r=a[k];
+    return '<button class="green" data-rs="'+esc(k)+'" style="width:100%;text-align:left">'+(r.kind==="exam"?"📝 Prueba final":esc(r.title))+(r.kind==="lesson"?(r.part==="f"?" · Frases":" · Vocabulario"):(r.kind==="plan"?(r.part==="f"?" · Frases":" · Vocabulario"):""))+'<small style="display:block;font-weight:normal">'+rsLine(r)+'</small></button>';}).join("")+'</div>';
+}
+function rsBindHome(){main.querySelectorAll("[data-rs]").forEach(function(b){b.onclick=function(){rsResume(b.getAttribute("data-rs"));};});}
 /* ===== MOTOR DE LECCIONES ===== */
 function usableCross(words){var seen={};return (words||[]).filter(function(x){var n=norm(x[0]);if(!/^[a-z]{3,10}$/.test(n)||seen[n])return false;seen[n]=1;return true;});}
 function buildStepsRaw(les,part){
@@ -1452,6 +1582,8 @@ function buildStepsRaw(les,part){
     return r;
   }
   switch(part){
+    case "v":return vocabSteps(les);
+    case "f":return frasesSteps(les);
     case "p1":return p1();
     case "p2":return p2();
     case "p3":return p3();
@@ -1467,14 +1599,121 @@ function buildStepsRaw(les,part){
     default:return p1().concat(p2(),p3(),p4());
   }
 }
+
+/* ===== v52: lecciones en 2 partes (Vocabulario / Frases) por rondas ===== */
+var SWAP={"do":"does","does":"do","don't":"doesn't","doesn't":"don't","is":"are","are":"is","isn't":"aren't","aren't":"isn't","he":"she","she":"he","it":"they","they":"it","some":"any","any":"some","like":"likes","likes":"like","want":"wants","wants":"want","am":"is","can":"can't","can't":"can","yes":"no","no":"yes","i":"you","you":"i","has":"have","have":"has"};
+function extrasFor(sentence,pool){
+  var toks=sentence.split(" "),cand=[],low=toks.map(function(t){return t.toLowerCase().replace(/[^a-z']/g,"");});
+  toks.forEach(function(t,i){
+    var m=/^([A-Za-z']+)([^A-Za-z']*)$/.exec(t);if(!m)return;
+    var w=m[1].toLowerCase(),sw=SWAP[w];if(!sw||low.indexOf(sw)>=0)return;
+    if(w==="i"&&t[0]!=="I")return;
+    var o=sw;if(m[1][0]===m[1][0].toUpperCase()&&i===0)o=o.charAt(0).toUpperCase()+o.slice(1);
+    if(w==="i"||sw==="i")o=(sw==="i")?"I":o;
+    cand.push(o+m[2].replace(/\.$/,""));
+  });
+  cand=shuffle(cand);var out=cand.slice(0,Math.random()<0.5?1:2);
+  if(!out.length){
+    var words=[];(pool||[]).forEach(function(x){(x.en||"").split(" ").forEach(function(t){var c=t.replace(/[^A-Za-z']/g,"");if(c.length>2&&low.indexOf(c.toLowerCase())<0&&words.indexOf(c.toLowerCase())<0)words.push(c.toLowerCase());});});
+    out=shuffle(words).slice(0,1);
+  }
+  return out;
+}
+function altsFor(w,v){return v.filter(function(x){return x[0]!==w[0]&&String(x[1]).toLowerCase()===String(w[1]).toLowerCase();}).map(function(x){return x[0];});}
+function es2opts(w,v){
+  var alts=altsFor(w,v),others=shuffle(v.filter(function(x){return x[0]!==w[0]&&alts.indexOf(x[0])<0&&String(x[1]).toLowerCase()!==String(w[1]).toLowerCase();})).slice(0,2);
+  return [w[0]].concat(others.map(function(x){return x[0];}));
+}
+function esquizOpts(sx,pool){
+  var en=sx.en,out=[en],toks=en.split(" ");
+  var vars=[];
+  toks.forEach(function(t,i){
+    var m=/^([A-Za-z']+)([^A-Za-z']*)$/.exec(t);if(!m)return;
+    var sw=SWAP[m[1].toLowerCase()];if(!sw||m[1].toLowerCase()==="i"||m[1].toLowerCase()==="you")return;
+    var o=sw;if(m[1][0]===m[1][0].toUpperCase())o=o.charAt(0).toUpperCase()+o.slice(1);
+    var c=toks.slice();c[i]=o+m[2];vars.push(c.join(" "));
+  });
+  shuffle(vars).forEach(function(x){if(out.length<3&&out.indexOf(x)<0)out.push(x);});
+  shuffle(pool||[]).forEach(function(x){if(out.length<3&&out.indexOf(x.en)<0&&x.en.split(" ").length<=en.split(" ").length+2)out.push(x.en);});
+  return out;
+}
+function isYN(q){return /^(yes|no)\b/i.test((q.answers||[""])[0]);}
+function pickYN(items,n){
+  var nm=shuffle(items.filter(function(x){return x.nm;})),pl=shuffle(items.filter(function(x){return !x.nm;}));
+  var wn=Math.round(n*2/3),a=nm.slice(0,wn),b=pl.slice(0,n-wn),rest=nm.slice(wn).concat(pl.slice(n-wn));
+  while(a.length+b.length<n&&rest.length)b.push(rest.shift());
+  return shuffle(a.concat(b));
+}
+function qaPick(qa,n,skip){
+  var pool=skip?qa.filter(function(x){return skip.indexOf(x)<0;}):qa;
+  var yn=pool.filter(isYN),ot=pool.filter(function(x){return !isYN(x);});
+  var r=yn.length>=2?pickYN(yn,Math.min(n,yn.length)):yn.slice();
+  while(r.length<n&&ot.length)r.push(ot.shift());
+  return r;
+}
+function interleave(lists){
+  var out=[],idx=lists.map(function(){return 0;}),more=true;
+  while(more){more=false;lists.forEach(function(l,i){if(idx[i]<l.length){out.push(l[idx[i]++]);more=true;}});}
+  return out;
+}
+function spreadSame(a){
+  function k(x){return x.w?x.w[0]:null;}
+  for(var i=1;i<a.length;i++){
+    if(k(a[i])&&k(a[i])===k(a[i-1])){
+      for(var j=i+1;j<a.length;j++){if(k(a[j])!==k(a[i-1])&&(i+1>=a.length||k(a[j])!==k(a[i+1]))){var t=a[i];a[i]=a[j];a[j]=t;break;}}
+    }
+  }
+  return a;
+}
+var RSIZE=12;
+function withRounds(steps){
+  var intro=[],ex=[];
+  steps.forEach(function(x){if(!ex.length&&NOSCORE[x.t])intro.push(x);else ex.push(x);});
+  var tail=null;if(ex.length&&ex[ex.length-1].t==="cross"){tail=ex.pop();}
+  var n=Math.max(1,Math.round((ex.length+(tail?1:0))/RSIZE)),per=Math.ceil((ex.length+(tail?1:0))/n),out=intro.slice(),r=0,c=0;
+  ex.concat(tail?[tail]:[]).forEach(function(x,i,all){
+    if(c===0)r++;
+    var y=JSON.parse(JSON.stringify(x));y.rd=r;y.rds=n;out.push(y);c++;
+    if(c>=per&&r<n){out.push({t:"roundend",n:r,of:n});c=0;}
+  });
+  return out;
+}
+function vocabSteps(les){
+  var v=les.vocab||[],cw=les.cross||v,sg=usableCross(cw),r=[];
+  (les.tips||(les.tip?[les.tip]:[])).forEach(function(t){r.push({t:"tip",tip:t});});
+  if(!v.length)return r;
+  r.push({t:"gallery",words:v});
+  var big=!les.id,nW=big?16:10,nD=big?10:8,nL=big?8:6;
+  var wr=shuffle(v).slice(0,nW).map(function(w){return {t:"write",w:w};});
+  var es=shuffle(v).slice(0,nW).map(function(w){return {t:"es2en",w:w,alts:altsFor(w,v)};});
+  var wd=shuffle(v.filter(function(w){return norm(w[0]).length>=2;})).slice(0,nD).map(function(w){return {t:"wdict",w:w,alts:altsFor(w,v)};});
+  var lt=shuffle(sg).slice(0,nL).map(function(w,i){return {t:"letters",w:w,miss:missFor(i)};});
+  var body=spreadSame(interleave([wr,es,wd,lt]));
+  r=r.concat(body);
+  if(sg.length>=3)r.push({t:"cross",words:cw});
+  return r;
+}
+function frasesSteps(les){
+  var S=les.sentences||[],G=les.gaps||[],qa=les.qa||[],sc=les.scenes||[],sq=les.seqs||[];
+  var big=!les.id;
+  var gp=shuffle(G).slice(0,big?12:10).map(function(g,i){return {t:i%2?"gaptype":"gap",g:g};});
+  var od=shuffle(S).slice(0,big?8:6).map(function(x){return {t:"order",s:x,x:extrasFor(x.en,S)};});
+  var eo=shuffle(S).slice(0,big?6:5).map(function(x){return {t:"esorder",s:x,x:extrasFor(x.en,S)};});
+  var eq=shuffle(S).slice(0,big?6:4).map(function(x){return {t:"esquiz",s:x,o:esquizOpts(x,S)};});
+  var sl=shuffle(sq).slice(0,2).map(function(x){return {t:"seq",s:{en:x.en,es:x.es},title:x.title};});
+  var qs=qaPick(qa,big?10:8).map(function(q,i){return {t:i%2?"qatype":"qachoose",q:q};});
+  var ss=pickYN(sc,Math.min(big?8:6,sc.length)).map(function(x,i){return {t:i%2?"scenetype":"scenechoose",sc:x};});
+  return interleave([gp,od,qs,eq,ss,eo,sl]);
+}
+function weakOf(lids){return PROG.weak.filter(function(x){return lids.indexOf(x.lid)>=0;});}
 /* ===== niveles de dificultad ===== */
 var LVINFO={1:["🌱 Básico","Reconocer y elegir"],2:["🌿 Medio","Escribir y ordenar"],3:["🌳 Avanzado","Dictado largo y responder sola"]};
 function lvSel(){if(pload("et_lvmig",0)!==1){psave("et_lv",[1,2,3]);psave("et_lvmig",1);}var a=pload("et_lv",[1,2,3]);return (a&&a.length)?a:[1,2,3];}
 function missFor(i){var o=lvSel();return o[i%o.length];}
 function levelOf(st){
   switch(st.t){
-    case "tip":case "gallery":case "examintro":case "nospeech":return 0;
-    case "hearpick":case "tf":case "match":case "memory":case "search":case "gap":case "qachoose":case "scenechoose":return 1;
+    case "tip":case "gallery":case "examintro":case "nospeech":case "roundend":return 0;
+    case "hearpick":case "tf":case "match":case "memory":case "search":case "gap":case "qachoose":case "scenechoose":case "es2pick":case "esquiz":return 1;
     case "letters":return st.miss===1?1:st.miss===2?2:3;
     case "order":return st.s.en.split(" ").length<=4?1:2;
     case "dictation":return st.s.en.split(" ").length<=4?2:3;
@@ -1488,6 +1727,7 @@ function filterLv(steps){
 }
 function buildSteps(les,part){
   var r=buildStepsRaw(les,part);
+  if(part==="v"||part==="f")return withRounds(filterLv(r));
   return /^(p[1-4]|all)$/.test(part||"all")?filterLv(r):r;
 }
 function levelsHtml(force){
@@ -1506,18 +1746,29 @@ function bindLevels(cb){
   };});
 }
 function lessonMenu(les){
-  L=null;if(hasTTS)speechSynthesis.cancel();document.body.classList.remove("exam");
-  var defs=[["p1","🔤 Parte 1: Palabras"],["p2","🧩 Parte 2: Frases"],["p3","💬 Parte 3: Preguntas y respuestas"],["p4","🎮 Parte 4: Juegos de letras"],["all","🌟 Todo seguido"]];
-  var btns=defs.map(function(d){var n=buildSteps(les,d[0]).length;return n?'<button data-part="'+d[0]+'">'+d[1]+'<small>'+n+' ejercicios</small></button>':"";}).join("");
+  L=null;if(hasTTS)speechSynthesis.cancel();document.body.classList.remove("exam");document.body.removeAttribute("data-st");
+  var RS=rsAll(),defs=[["v","🔤 Parte 1 · Vocabulario","Escribir palabras, una por vez"],["f","🧩 Parte 2 · Frases, preguntas y respuestas","Completar, ordenar y responder"]];
+  var btns=defs.map(function(d){
+    var steps=buildSteps(les,d[0]),n=steps.filter(function(x){return !NOSCORE[x.t];}).length;if(!n)return "";
+    var rds=steps[steps.length-1].rds||1,k=les.id+"|"+d[0],r=RS[k];
+    return (r&&r.steps&&r.i<r.steps.length?'<button class="green" data-resume="'+esc(k)+'">▶ Continuar '+d[1].split(" · ")[0].replace(/^\S+ /,"")+'<small>'+rsLine(r)+'</small></button>':"")+
+      '<button data-part="'+d[0]+'">'+(r?'↻ Empezar de nuevo · ':'')+d[1]+'<small>'+n+' ejercicios en '+rds+(rds===1?' ronda':' rondas')+' · '+d[2]+'</small></button>';
+  }).join("");
+  var wk=weakOf([les.id]).length;
   var grp=les.grp?GROUPS.filter(function(g){return g.id===les.grp;})[0]:null;
   var back=grp&&grp.units.length>1;
-  main.innerHTML='<button class="ghost" id="homebtn">'+(back?'← '+esc(grp.title):'← Inicio')+'</button><div class="card"><h2>'+les.icon+' '+esc(les.title)+'</h2><p class="small">'+esc(les.desc)+'</p>'+pbar(unitPct(les))+'<div class="lessons" style="margin-top:10px">'+btns+'</div></div>'+levelsHtml();
+  main.innerHTML='<button class="ghost" id="homebtn">'+(back?'← '+esc(grp.title):'← Inicio')+'</button><div class="card"><h2>'+les.icon+' '+esc(les.title)+'</h2><p class="small">'+esc(les.desc)+'</p>'+pbar(unitPct(les))+'<div class="lessons" style="margin-top:10px">'+btns+
+    (wk?'<button class="red" data-rev="1">🔁 Repaso de esta lección<small>'+wk+(wk===1?' cosa por repasar':' cosas por repasar')+'</small></button>':'')+'</div></div>'+levelsHtml();
   $("homebtn").onclick=back?function(){groupMenu(grp);}:home;bindLevels(function(){lessonMenu(les);});
   main.querySelectorAll("[data-part]").forEach(function(b){b.onclick=function(){startLesson(les,b.getAttribute("data-part"));};});
+  main.querySelectorAll("[data-resume]").forEach(function(b){b.onclick=function(){rsResume(b.getAttribute("data-resume"));};});
+  main.querySelectorAll("[data-rev]").forEach(function(b){b.onclick=function(){startReview([les.id]);};});
 }
 function startLesson(les,part){
   part=part||"all";
-  L={title:les.title,les:les,steps:buildSteps(les,part),i:0,stars:0,part:part,only:null};renderStep();
+  L={title:les.title,les:les,steps:buildSteps(les,part),i:0,stars:0,part:part,only:null};
+  if(part==="v"||part==="f"){L.rkey=les.id+"|"+part;L.rpart=part;rsPut(L.rkey,null);}
+  renderStep();
 }
 function startSection(mode){
   var key=secKey();
@@ -1527,8 +1778,8 @@ function startSection(mode){
   if(!steps.length){alert("Esta sección no tiene suficientes palabras para eso.");return;}
   L={title:key,les:les,steps:steps,i:0,stars:0,part:null,only:mode};renderStep();
 }
-var NOSCORE={tip:1,gallery:1,nospeech:1};
-var HELPV={hearpick:1,tf:1,write:1,letters:1},HELPG={esorder:1,gaptype:1,seq:1,gap:1,order:1,dictation:1,qachoose:1,qaorder:1,qatype:1,scenechoose:1,scenetype:1};
+var NOSCORE={tip:1,gallery:1,nospeech:1,roundend:1};
+var HELPV={hearpick:1,tf:1,write:1,letters:1,es2en:1,wdict:1,es2pick:1},HELPG={esquiz:1,esorder:1,gaptype:1,seq:1,gap:1,order:1,dictation:1,qachoose:1,qaorder:1,qatype:1,scenechoose:1,scenetype:1};
 var NOREV={tf:1};
 var GAMEST={match:1,memory:1,search:1,cross:1,speak:1};
 function stepKey(st){if(st.k)return st.k;return st.t+"|"+JSON.stringify(st.w||st.s||st.g||st.q||st.sc||st.words||"",function(k,v){return k==="_lid"?undefined:v;});}
@@ -1551,22 +1802,33 @@ function markWeak(st,strong){
   var ex=PROG.weak.filter(function(x){return stepKey(x)===k;})[0];
   if(ex){ex.ok=0;psave("et_prog",PROG);}
   else{
-    var c=JSON.parse(JSON.stringify(st));delete c.queued;delete c.rep;c.ok=0;c.lid=stepLid(st)||st.lid||(L&&L.les&&L.les.id)||null;
+    var c=JSON.parse(JSON.stringify(st));delete c.queued;delete c.rep;c.ok=0;c.lid=lidFor(st);
     PROG.weak.push(c);if(PROG.weak.length>60)PROG.weak.shift();psave("et_prog",PROG);
   }
   var lab=stepLabel(st);L.struggled=L.struggled||[];
   if(!L.struggled.some(function(x){return x.txt===lab.txt;}))L.struggled.push(lab);
   if(L.part!=="review"&&(st.rep||0)<(strong?2:1)){
     var copy=JSON.parse(JSON.stringify(st));copy.rep=(st.rep||0)+1;delete copy.queued;
-    L.steps.splice(Math.min(L.i+4,L.steps.length),0,copy);
+    var endI=L.steps.length;
+    for(var q=L.i+1;q<L.steps.length;q++){if(L.steps[q].t==="roundend"){endI=q;break;}}
+    var posI=Math.min(L.i+10,endI);
+    if(posI-L.i<6&&endI<L.steps.length)posI=Math.min(endI+4,L.steps.length);
+    L.steps.splice(posI,0,copy);
   }
+}
+function lidFor(st){
+  var l=stepLid(st)||st.lid||(L&&L.les&&L.les.id)||null;if(l)return l;
+  if(st.w){var en=String(st.w[0]).toLowerCase(),pref=(L&&L.plan&&L.plan.lessons)||[],best=null;
+    LESSONS.forEach(function(x){if((x.vocab||[]).some(function(v){return String(v[0]).toLowerCase()===en;})){if(!best||(pref.indexOf(x.id)>=0&&pref.indexOf(best)<0))best=x.id;}});
+    return best;}
+  return null;
 }
 function weakWord(raw){
   if(!L||L.exam||!raw)return false;
   var k=stepKey({t:"write",w:raw});L.wk=L.wk||{};if(L.wk[k])return false;L.wk[k]=1;
   markWeak({t:"write",w:raw});return true;
 }
-function goal(){return pload("et_goal",3);}
+function goal(){return pload("et_goal",2);}
 function dots(e){var g=goal(),o=Math.min(e.ok||0,g),r="";for(var i=0;i<g;i++)r+=i<o?"●":"○";return r;}
 function masterStep(st){
   var k=stepKey(st),e=PROG.weak.filter(function(x){return stepKey(x)===k;})[0];
@@ -1582,7 +1844,7 @@ function masterStep(st){
 function reinsertReview(st){
   L.rc=L.rc||{};var k=stepKey(st);L.rc[k]=(L.rc[k]||0)+1;if(L.rc[k]>8)return;
   var copy=JSON.parse(JSON.stringify(st));copy.rep=0;delete copy.queued;
-  L.steps.splice(Math.min(L.i+5,L.steps.length),0,copy);
+  L.steps.splice(Math.min(L.i+8,L.steps.length),0,copy);
 }
 function ruleFor(st){
   var lid=st.lid||stepLid(st);
@@ -1639,12 +1901,12 @@ function next(){
     }
     markDay();L.cur=0;L.revealed=false;L.peek=false;
   }
-  L.i++;renderStep();
+  L.i++;rsSave();renderStep();
 }
 function toWriting(x){
   var c=JSON.parse(JSON.stringify(x)),key=stepKey(x);
   c.rep=0;delete c.queued;
-  if(x.w)c.t="write";else if(x.s)c.t="dictation";else if(x.g)c.t="gaptype";else if(x.q)c.t="qatype";else if(x.sc)c.t="scenetype";
+  if(x.w)c.t="write";else if(x.s){c.t="esorder";c.x=extrasFor(x.s.en,[]);}else if(x.g)c.t="gaptype";else if(x.q)c.t="qatype";else if(x.sc)c.t="scenetype";
   c.k=key;return c;
 }
 var REVN=12;
@@ -1655,15 +1917,17 @@ function freshW(w){
   if(!best)LESSONS.forEach(function(l){look(l.vocab);});
   return best?best.slice(0,3).concat(w.slice(3)):w;
 }
-function startReview(){
-  var pool=shuffle(PROG.weak).sort(function(a,b){return ((a.lr||0)-(b.lr||0))||((a.ok||0)-(b.ok||0));}).slice(0,REVN);
+function startReview(lids){
+  if(!Array.isArray(lids))lids=null;
+  var base=lids?PROG.weak.filter(function(x){return lids.indexOf(x.lid)>=0;}):PROG.weak;
+  var pool=shuffle(base).sort(function(a,b){return ((a.lr||0)-(b.lr||0))||((a.ok||0)-(b.ok||0));}).slice(0,REVN);
   if(!pool.length)return;
   var now=Date.now();pool.forEach(function(x){x.lr=now;if(x.w)x.w=freshW(x.w);});psave("et_prog",PROG);
   var items=pool.map(toWriting),words=[],seen={};
   pool.forEach(function(x){if(x.w&&!seen[x.w[0]]){seen[x.w[0]]=1;words.push(x.w);}});
   var steps=chunks(shuffle(words),6,2).map(function(c){return {t:"match",words:c};});
   steps=steps.concat(items);
-  L={title:"Repaso 🔁",les:{title:"Repaso"},steps:steps,i:0,stars:0,part:"review",only:null};renderStep();
+  L={title:"Repaso 🔁",les:{title:"Repaso"},steps:steps,i:0,stars:0,part:"review",only:null,revLids:lids};renderStep();
 }
 function renderStep(){
   if(!L)return;
@@ -1682,7 +1946,7 @@ function shell(inner){
     helper='<div class="center" id="helper"><button class="ghost" id="dk">🤷 No sé</button>'+(HELPG[st.t]&&ruleFor(st)?'<button class="ghost" id="rl">💡 Recuérdame la regla</button>':"")+'</div><div id="help"></div>';
   }
   var lab=st.sec?'<div class="small" style="margin:-4px 0 8px"><b>'+esc(st.sec)+'</b></div>':"";
-  main.innerHTML='<button class="ghost" id="homebtn">← Inicio</button><span class="small"> '+esc(L.title)+' · '+(L.exam?'pregunta':'paso')+' '+(L.i+1)+' de '+L.steps.length+(st.rep?' · 🔁 repaso':"")+'</span>'+
+  main.innerHTML='<button class="ghost" id="homebtn">← Inicio</button><span class="small"> '+esc(L.title)+' · '+(L.exam?'pregunta':'paso')+' '+(L.i+1)+' de '+L.steps.length+(st.rd?' · ronda '+st.rd+' de '+st.rds:"")+(st.rep?' · 🔁 repaso':"")+'</span>'+
     '<div class="progress"><i style="width:'+pct+'%"></i></div>'+lab+inner+helper;
   $("homebtn").onclick=function(){if(L&&L.exam&&!confirmExit())return;home();};
   if($("dk"))$("dk").onclick=function(){dontKnow(st);};
@@ -1703,8 +1967,9 @@ function nextBtn(label){return '<div class="center"><button class="green" id="nx
 function bindNext(){var n=$("nxt");if(n)n.onclick=next;}
 function finishLesson(){
   var les=L.les,only=L.only,part=L.part;
-  if(!only&&les.id)markPart(les.id,part,L.stars);
-  if(L.plan&&L.plan.grp&&part==="plan")L.plan.lessons.forEach(function(id){(L.plan.parts||[]).forEach(function(p){markPart(id,p,0);});});
+  if(L.rkey)rsPut(L.rkey,null);
+  if(!only&&les.id)markPart(les.id,PARTMAP[part]||part,L.stars);
+  if(L.plan&&L.plan.grp&&part==="plan")L.plan.lessons.forEach(function(id){(L.plan.parts||[]).forEach(function(p){markPart(id,PARTMAP[p]||p,0);});});
   if(part==="review"&&L.steps.length>=3){starsData.total=(starsData.total||0)+3;psave("et_stars",starsData);L.stars+=3;updateStars();}
   var easyMsg=easyFinish();
   markDay();earnFinish();
@@ -1717,7 +1982,7 @@ function finishLesson(){
     (left?'<button class="red" id="rev">🔁 Repasar lo que no sé ('+left+')</button>':"")+
     (only||part==="review"||part==="plan"?'':'<button class="alt" id="parts">Elegir otra parte</button>')+'<button class="ghost" id="homebtn2">Inicio</button></div></div>';
   var plan=L.plan;
-  $("again").onclick=function(){if(part==="review"){if(left)startReview();else home();}else if(part==="plan")startPlan(plan);else if(only)startSection(only);else startLesson(les,part);};
+  $("again").onclick=function(){if(part==="review"){var rl=L&&L.revLids;if(left)startReview(rl);else home();}else if(part==="plan")startPlan(plan);else if(only)startSection(only);else startLesson(les,part);};
   if($("rev"))$("rev").onclick=startReview;
   if($("toalbum"))$("toalbum").onclick=stickerScreen;
   if($("parts"))$("parts").onclick=function(){lessonMenu(les);};
@@ -1731,13 +1996,13 @@ R.gaptype=function(st){
   var hear=[parts[0].trim(),(parts[1]||"").trim()].filter(function(x){return /[A-Za-z]/.test(x);}).join(" , ");
   shell('<div class="card"><h2>✍️ Escribe la palabra que falta</h2><div class="word" style="font-size:26px">'+esc(parts[0])+'<span id="blank">____</span>'+esc(parts[1]||"")+'</div>'+esHtml(g.es)+
     '<div class="center"><button class="alt" data-say="'+esc(hear)+'">🔊 Escuchar la frase</button></div>'+
-    '<input type="text" id="ans" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Escribe la palabra…" style="text-align:center;font-size:24px;margin-top:8px">'+
+    '<input type="text" id="ans" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="Escribe la palabra…" style="text-align:center;font-size:24px;margin-top:8px">'+
     '<div class="center"><button class="green" id="chk">Comprobar</button></div><div id="fb"></div></div>');
   var inp=$("ans");inp.focus();
   function check(){
     if(done||!norm(inp.value))return;
     var full=g.s.replace("___",g.answer);
-    if(norm(inp.value)===norm(g.answer)){
+    if(nrm(inp.value)===nrm(g.answer)){
       done=true;if(tries===0)addStar(1);$("blank").textContent=g.answer;
       $("fb").innerHTML='<div class="fb ok">✅ ¡Muy bien! <b>'+esc(full)+'</b></div>'+nextBtn();bindNext();
       inp.disabled=true;$("chk").disabled=true;speak(full,0.85);
@@ -1784,27 +2049,8 @@ R.hearpick=function(st){
 };
 
 R.write=function(st){
-  var w=st.w,tries=0;
-  shell('<div class="card"><div class="big">'+pic(w[2])+'</div>'+esLine(w)+
-    '<div class="center"><button class="alt" data-say="'+esc(w[0])+'">🔊 Pista de sonido</button></div>'+
-    '<input type="text" id="ans" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Escribe en inglés…" style="text-align:center;font-size:24px;margin-top:8px">'+
-    '<div class="center"><button class="green" id="chk">Comprobar</button></div><div id="fb"></div></div>');
-  var inp=$("ans");inp.focus();
-  function check(){
-    if(!norm(inp.value))return;
-    if(norm(inp.value)===norm(w[0])){
-      if(tries===0)addStar(1);
-      $("fb").innerHTML='<div class="fb ok">✅ ¡Muy bien! <b>'+esc(w[0])+'</b></div>'+nextBtn();bindNext();
-      speak(w[0],0.85);inp.disabled=true;$("chk").disabled=true;
-    }else{
-      tries++;
-      $("fb").innerHTML='<div class="fb bad">❌ Casi. Así se escribe:<div class="letters">'+diffLetters(inp.value,w[0])+'</div></div>'+
-        '<div class="center"><button data-say="'+esc(w[0])+'">🔊 Escuchar</button><button class="alt" id="retry">Intentar otra vez</button><button class="ghost" id="nxt">Saltar →</button></div>';
-      $("retry").onclick=function(){inp.value="";$("fb").innerHTML="";inp.focus();};bindNext();
-    }
-  }
-  inp.onkeydown=function(e){if(e.key==="Enter")check();};
-  $("chk").onclick=check;
+  var w=st.w;
+  writeEx(st,{head:'<div class="big">'+pic(w[2])+'</div>'+esLine(w)+'<div class="center"><button class="alt" data-say="'+esc(w[0])+'">🔊 Pista de sonido</button></div>',say:false});
 };
 
 R.nospeech=function(){
@@ -1837,12 +2083,13 @@ R.speak=function(st){
 /* ----- ordenar palabras (frases y respuestas) ----- */
 function orderUI(o){
   var toks=o.sentence.split(" ").map(function(t,i,a){return i===a.length-1?t.replace(/\.$/,""):t;}),tiles,placed=[],tries=0;
+  var allt=toks.concat(o.extra||[]);
   var guard=0;
-  do{tiles=shuffle(toks.map(function(t,i){return {id:i,t:t};}));guard++;}
-  while(toks.length>1&&guard<20&&tiles.map(function(x){return x.t;}).join(" ")===o.sentence);
+  do{tiles=shuffle(allt.map(function(t,i){return {id:i,t:t};}));guard++;}
+  while(toks.length>1&&!(o.extra&&o.extra.length)&&guard<20&&tiles.map(function(x){return x.t;}).join(" ")===o.sentence);
   shell('<div class="card"><h2>'+o.title+'</h2>'+(o.q?'<div class="word" style="font-size:26px">'+esc(o.q)+'</div>':'')+
     (o.say?'<div class="center"><button class="alt" data-say="'+esc(o.say)+'">🔊 Escuchar</button></div>':'')+
-    esHtml(o.hint||"")+'<div id="slot" class="slot"></div><div id="bank" class="bank"></div>'+
+    esHtml(o.hint||"")+(o.extra&&o.extra.length?'<p class="small" style="margin:4px 0">ℹ️ <b>No se usan todas las palabras:</b> sobran algunas.</p>':'')+'<div id="slot" class="slot"></div><div id="bank" class="bank"></div>'+
     '<div class="center"><button class="green" id="chk">Comprobar</button><button class="ghost" id="clr">Borrar</button></div><div id="fb"></div></div>');
   if(o.say)autoSay(o.say);
   function draw(){
@@ -1854,7 +2101,7 @@ function orderUI(o){
   $("slot").onclick=function(e){var b=e.target.closest(".tile");if(!b||$("chk").disabled)return;placed.splice(placed.indexOf(byId(b.getAttribute("data-id"))),1);draw();};
   $("clr").onclick=function(){if($("chk").disabled)return;placed=[];draw();$("fb").innerHTML="";};
   $("chk").onclick=function(){
-    if(placed.length<tiles.length){$("fb").innerHTML='<div class="fb info">Usa todas las palabras 🙂</div>';return;}
+    if(placed.length<toks.length){$("fb").innerHTML='<div class="fb info">Forma la frase completa 🙂'+(o.extra&&o.extra.length?' (no se usan todas las palabras)':'')+'</div>';return;}
     var ans=placed.map(function(p){return p.t;}).join(" ");
     if(norm(ans)===norm(o.sentence)){
       if(tries===0)addStar(1);
@@ -1868,9 +2115,9 @@ function orderUI(o){
   };
   draw();
 }
-R.esorder=function(st){orderUI({title:"🧩 Ordena en inglés",q:st.s.es,sentence:st.s.en,say:"",hint:""});};
-R.seq=function(st){orderUI({title:"🗓️ "+st.title,sentence:st.s.en,say:"",hint:st.s.es});};
-R.order=function(st){orderUI({title:"🧩 Ordena la frase",sentence:st.s.en,say:st.s.en,hint:st.s.es});};
+R.esorder=function(st){orderUI({title:"🧩 Ordena en inglés",q:st.s.es,sentence:st.s.en,say:"",hint:"",extra:st.x});};
+R.seq=function(st){orderUI({title:"🗓️ "+st.title,sentence:st.s.en,say:"",hint:st.s.es,extra:st.x});};
+R.order=function(st){orderUI({title:"🧩 Ordena la frase",sentence:st.s.en,say:(L&&L.exam)?"":st.s.en,hint:st.s.es,extra:st.x,q:(L&&L.exam)?st.s.es:""});};
 R.qaorder=function(st){
   var ans=shuffle(st.q.answers)[0];
   orderUI({title:"🧩 Ordena tu respuesta",q:st.q.q,sentence:ans,say:st.q.q,hint:st.q.es});
@@ -1914,8 +2161,8 @@ R.qatype=function(st){
   var q=st.q,tries=0,done=false;
   shell('<div class="card"><h2>🗣️ Ahora responde tú</h2><div class="word" style="font-size:26px">'+esc(q.q)+'</div>'+esHtml(q.es)+(L&&L.exam?'':'<p class="small" style="margin:4px 0">💡 Aquí vale Yes o No: fíjate bien en el verbo (do, does, am…)</p>')+
     '<div class="center"><button class="alt" data-say="'+esc(q.q)+'">🔊 Escuchar otra vez</button></div>'+
-    '<input type="text" id="ans" autocomplete="off" autocapitalize="sentences" spellcheck="false" placeholder="Escribe tu respuesta (Yes… / No…)" style="text-align:center;font-size:22px;margin-top:8px">'+
-    '<div class="center"><button class="green" id="chk">Comprobar</button>'+(SR?'<button class="red" id="mic">🎤 Responder hablando</button>':'')+'</div><div id="fb"></div></div>');
+    '<input type="text" id="ans" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="Escribe tu respuesta (Yes… / No…)" style="text-align:center;font-size:22px;margin-top:8px">'+
+    '<div class="center"><button class="green" id="chk">Comprobar</button>'+'</div><div id="fb"></div></div>');
   autoSay(q.q);
   var inp=$("ans");
   function ok(txt){
@@ -1931,27 +2178,20 @@ R.qatype=function(st){
   }
   function check(){
     if(done||!norm(inp.value))return;
-    var n=norm(inp.value),hit=q.answers.filter(function(a){return norm(a)===n;})[0];
+    var n=nrm(inp.value),hit=q.answers.filter(function(a){return nrm(a)===n;})[0];
     if(hit)ok(hit);else wrong("Revisa el verbo y las palabras.");
   }
   inp.onkeydown=function(e){if(e.key==="Enter")check();};
   $("chk").onclick=check;inp.focus();
-  if(SR&&$("mic"))$("mic").onclick=function(){
-    $("fb").innerHTML='<div class="fb">🎧 Te escucho…</div>';
-    listen(function(err,alts){
-      if(err){$("fb").innerHTML='<div class="fb info">No pude escucharte ('+esc(err)+'). Inténtalo otra vez o escríbelo.</div>';return;}
-      var hit=q.answers.filter(function(a){return spokenMatches(alts,a);})[0];
-      if(hit)ok(hit);else wrong('Entendí: <b>'+esc(alts[0])+'</b>.');
-    });
-  };
 };
 
 /* ----- dibujo + pregunta (como en el examen) ----- */
 function tblHtml(t){
   return '<div style="overflow-x:auto"><table class="tbl"><tr><th></th>'+t.foods.map(function(f){return '<th>'+icoTokens(esc(f))+'</th>';}).join("")+'</tr>'+
-    t.people.map(function(p){return '<tr><th>'+esc(p.n)+'</th>'+p.f.map(function(x){return '<td>'+(x?'😊':'☹️')+'</td>';}).join("")+'</tr>';}).join("")+'</table></div>';
+    t.people.map(function(p){return '<tr><th>'+esc(p.n)+'</th>'+p.f.map(function(x){return '<td>'+(x?(t.ok||'😊'):(t.no||'☹️'))+'</td>';}).join("")+'</tr>';}).join("")+'</table></div>';
 }
-function sceneVis(sc){return sc.tbl?tblHtml(sc.tbl):'<div class="scene">'+icoTokens(esc(sc.pic))+'</div>';}
+function charsHtml(a){return '<div class="chars">'+a.map(function(c){return '<div class="chr"><b>'+esc(c.n)+'</b><span>'+c.e+'</span></div>';}).join("")+'</div>';}
+function sceneVis(sc){return sc.tbl?tblHtml(sc.tbl):sc.chars?charsHtml(sc.chars):'<div class="scene">'+icoTokens(esc(sc.pic))+'</div>';}
 var TOBE={is:1,are:1};
 function sceneAns(sc){
   if(TOBE[sc.aux])return sc.yes?("Yes, "+sc.sub+" "+sc.aux+"."):("No, "+sc.sub+" "+(sc.aux==="is"?"isn't":"aren't")+".");
@@ -1984,13 +2224,13 @@ R.scenetype=function(st){
   var sc=st.sc,ans=sceneAns(sc),tries=0,done=false;
   shell('<div class="card"><h2>🖼️ Mira el dibujo y escribe la respuesta</h2>'+sceneVis(sc)+
     '<div class="word" style="font-size:26px">'+esc(sc.q)+'</div>'+esHtml(sc.es)+'<div class="center"><button class="alt" data-say="'+esc(sc.q)+'">🔊 Escuchar otra vez</button></div>'+
-    '<input type="text" id="ans" autocomplete="off" autocapitalize="sentences" spellcheck="false" placeholder="Yes, … / No, …" style="text-align:center;font-size:22px;margin-top:8px">'+
+    '<input type="text" id="ans" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="Yes, … / No, …" style="text-align:center;font-size:22px;margin-top:8px">'+
     '<div class="center"><button class="green" id="chk">Comprobar</button></div><div id="fb"></div></div>');
   autoSay(sc.q);
   var inp=$("ans");inp.focus();
   function check(){
     if(done||!norm(inp.value))return;
-    if(norm(inp.value)===norm(ans)){
+    if(nrm(inp.value)===nrm(ans)){
       done=true;if(tries===0)addStar(1);
       $("fb").innerHTML='<div class="fb ok">✅ ¡Muy bien! <b>'+esc(ans)+'</b><br><span class="small">'+esc(sc.note)+'</span></div>'+nextBtn();bindNext();
       inp.disabled=true;$("chk").disabled=true;speak(ans,0.85);
@@ -2082,12 +2322,12 @@ R.letters=function(st){
 R.dictation=function(st){
   var s=st.s,tries=0,done=false;
   shell('<div class="card"><h2>🎧 Dictado</h2><p class="small">Escucha la frase y escríbela completa.</p><div class="center"><button class="alt" data-say="'+esc(s.en)+'">🔊 Escuchar</button><button data-say="'+esc(s.en)+'" data-rate="0.4">🐢 Despacio</button></div>'+
-    '<input type="text" id="ans" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Escribe lo que escuchas…" style="font-size:22px;margin-top:8px"><div class="center"><button class="green" id="chk">Comprobar</button></div><div id="fb"></div></div>');
+    '<input type="text" id="ans" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="Escribe lo que escuchas…" style="font-size:22px;margin-top:8px"><div class="center"><button class="green" id="chk">Comprobar</button></div><div id="fb"></div></div>');
   autoSay(s.en);
   var inp=$("ans");inp.focus();
   function check(){
     if(done||!norm(inp.value))return;
-    if(norm(inp.value)===norm(s.en)){
+    if(nrm(inp.value)===nrm(s.en)){
       done=true;if(tries===0)addStar(2);
       $("fb").innerHTML='<div class="fb ok">✅ ¡Perfecto! <b>'+esc(s.en)+'</b><br><span class="small">'+esc(s.es)+'</span></div>'+nextBtn();bindNext();
       inp.disabled=true;$("chk").disabled=true;
@@ -2105,6 +2345,65 @@ R.dictation=function(st){
   }
   inp.onkeydown=function(e){if(e.key==="Enter")check();};
   $("chk").onclick=check;
+};
+
+
+/* ===== v52: escribir del español al inglés, dictado de palabras, elegir la traducción ===== */
+function hintHtml(w){var t=String(w[0]);return 'Empieza por <b>'+esc(t.charAt(0))+'</b> · tiene <b>'+t.replace(/ /g,"").length+'</b> letras';}
+function writeEx(st,cfg){
+  var w=st.w,tries=0,done=false,hinted=false,accepts=[w[0]].concat(st.alts||[]);
+  shell('<div class="card">'+cfg.head+
+    '<input type="text" id="ans" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false" placeholder="Escribe en inglés…" style="text-align:center;font-size:24px;margin-top:8px">'+
+    '<div class="center"><button class="green" id="chk">Comprobar</button>'+((L&&L.exam)?'':'<button class="ghost" id="hint">💡 Pista</button>')+'</div><div id="fb"></div></div>');
+  if(cfg.say&&!(L&&L.exam))autoSay(w[0]);
+  var inp=$("ans");inp.focus();
+  if($("hint"))$("hint").onclick=function(){if(done)return;hinted=true;$("fb").innerHTML='<div class="fb info">💡 '+hintHtml(w)+'</div>';inp.focus();};
+  function check(){
+    if(done||!norm(inp.value))return;
+    var okk=accepts.some(function(a){return nrm(inp.value)===nrm(a);});
+    if(okk){
+      done=true;if(tries===0&&!hinted)addStar(1);
+      $("fb").innerHTML='<div class="fb ok">✅ ¡Muy bien! <b>'+esc(w[0])+'</b> = '+esc(w[1])+'</div>'+nextBtn();bindNext();
+      speak(w[0],0.85);inp.disabled=true;$("chk").disabled=true;
+    }else{
+      tries++;
+      $("fb").innerHTML='<div class="fb bad">❌ Casi. Así se escribe:<div class="letters">'+diffLetters(inp.value,w[0])+'</div></div>'+
+        '<div class="center"><button data-say="'+esc(w[0])+'">🔊 Escuchar</button><button class="alt" id="retry">Intentar otra vez</button><button class="ghost" id="nxt">Saltar →</button></div>';
+      $("retry").onclick=function(){inp.value="";$("fb").innerHTML="";inp.focus();};bindNext();
+    }
+  }
+  inp.onkeydown=function(e){if(e.key==="Enter")check();};
+  $("chk").onclick=check;
+}
+R.es2en=function(st){var w=st.w;writeEx(st,{head:'<h2>🇪🇸➡️🇬🇧 ¿Cómo se dice en inglés?</h2><div class="center"><div class="word" style="font-size:34px">'+esc(w[1])+'</div></div>',say:false});};
+R.wdict=function(st){var w=st.w;writeEx(st,{head:'<h2>🎧 Dictado de palabras</h2><p class="small">Escucha la palabra y escríbela.</p><div class="center"><button class="alt" data-say="'+esc(w[0])+'">🔊 Escuchar</button><button data-say="'+esc(w[0])+'" data-rate="0.4">🐢 Despacio</button></div>',say:true});};
+function pickBtns(opts){return '<div class="opts">'+opts.map(function(o){return '<button class="opt" data-v="'+esc(o)+'">'+esc(o)+'</button>';}).join("")+'</div>';}
+R.es2pick=function(st){
+  var w=st.w,tries=0,okv=[w[0]].concat(st.alts||[]);
+  shell('<div class="card center"><h2>🇪🇸➡️🇬🇧 ¿Cómo se dice en inglés?</h2><div class="word" style="font-size:34px">'+esc(w[1])+'</div>'+pickBtns(shuffle(st.o))+'<div id="fb"></div></div>');
+  main.querySelectorAll(".opt").forEach(function(b){b.onclick=function(){
+    if(okv.indexOf(b.getAttribute("data-v"))>=0){
+      if(tries===0)addStar(1);b.classList.add("good");
+      $("fb").innerHTML='<div class="fb ok">✅ ¡Muy bien! <b>'+esc(w[0])+'</b> = '+esc(w[1])+'</div>'+nextBtn();bindNext();
+      main.querySelectorAll(".opt").forEach(function(x){x.disabled=true;});speak(w[0],0.85);
+    }else{tries++;b.classList.add("nope");b.disabled=true;$("fb").innerHTML='<div class="fb bad">Casi. Prueba otra 🙂</div>';}
+  };});
+};
+R.esquiz=function(st){
+  var s=st.s,tries=0;
+  shell('<div class="card center"><h2>🇪🇸➡️🇬🇧 ¿Cómo se dice esto en inglés?</h2><div class="word" style="font-size:26px">'+esc(s.es)+'</div>'+pickBtns(shuffle(st.o))+'<div id="fb"></div></div>');
+  main.querySelectorAll(".opt").forEach(function(b){b.onclick=function(){
+    if(b.getAttribute("data-v")===s.en){
+      if(tries===0)addStar(1);b.classList.add("good");
+      $("fb").innerHTML='<div class="fb ok">✅ ¡Correcto!</div>'+nextBtn();bindNext();
+      main.querySelectorAll(".opt").forEach(function(x){x.disabled=true;});speak(s.en,0.85);
+    }else{tries++;b.classList.add("nope");b.disabled=true;$("fb").innerHTML='<div class="fb bad">Casi. Mira bien las palabras 🙂</div>';}
+  };});
+};
+R.roundend=function(st){
+  shell('<div class="card center"><div class="big">🎉</div><h2>¡Ronda '+st.n+' de '+st.of+' completada!</h2><p style="font-size:19px;line-height:1.5">Tu avance se guarda solo. Puedes seguir ahora o continuar otro día.</p>'+
+    '<button class="green" id="rgo">▶ Ronda '+(st.n+1)+'</button><button class="ghost" id="rhome">💾 Guardar y salir</button></div>');
+  $("rgo").onclick=next;$("rhome").onclick=home;
 };
 
 /* ----- memoria ----- */
@@ -2245,12 +2544,17 @@ function capSteps(steps,n){
 }
 function groupSteps(m,sel){
   if(!sel.grp)return planSteps(m,sel.parts||[]);
-  var st=[];(sel.parts||[]).forEach(function(p){st=st.concat(capSteps(buildSteps(m,p),24));});return st;
+  var st=[];(sel.parts||[]).forEach(function(p){
+    if(p==="v"||p==="f")st=st.concat(withRounds(filterLv(buildStepsRaw(m,p))));
+    else st=st.concat(capSteps(buildSteps(m,p),24));
+  });return st;
 }
 function startPlan(sel){
   var m=mergeLessons(sel),steps=groupSteps(m,sel);
   if(!steps.length)return false;
-  L={title:m.title,les:m,steps:steps,i:0,stars:0,part:"plan",only:null,plan:sel};renderStep();return true;
+  L={title:m.title,les:m,steps:steps,i:0,stars:0,part:"plan",only:null,plan:sel};
+  if(sel.grp&&sel.parts&&sel.parts.length===1&&/^[vf]$/.test(sel.parts[0])){L.rkey="plan:"+sel.grp+"|"+sel.parts[0];L.rpart=sel.parts[0];rsPut(L.rkey,null);}
+  renderStep();return true;
 }
 function selSummary(sel){
   var m=mergeLessons(sel);return {title:m.title,parts:(sel.parts||[]).map(function(p){return PARTNAMES[p];}).join(", ")};
@@ -2264,22 +2568,25 @@ function buildExam(m){
   function S2(txt){return "Hoja 2 · "+txt;}
   var s1=[],s2=[];
   if(v.length>=3)s1.push({t:"match",words:pickN(v,6),sheet:1,sec:S1("A. Une cada dibujo con su palabra")});
-  if(v.length>=3)pickN(v,4).forEach(function(w){s1.push({t:"hearpick",w:w,pool:v,sheet:1,sec:S1("B. Escucha y elige el dibujo")});});
+  if(v.length>=4)pickN(v,5).forEach(function(w){s1.push({t:"es2pick",w:w,alts:altsFor(w,v),o:es2opts(w,v),sheet:1,sec:S1("B. ¿Cómo se dice en inglés? (elige)")});});
   pickN(sg,5).forEach(function(w,i){s1.push({t:"letters",w:w,miss:missFor(i),sheet:1,sec:S1("C. Completa las letras que faltan")});});
   pickN(v,5).forEach(function(w){s1.push({t:"write",w:w,sheet:1,sec:S1("D. Escribe lo que ves")});});
+  pickN(v,5).forEach(function(w){s1.push({t:"es2en",w:w,alts:altsFor(w,v),sheet:1,sec:S1("E. ¿Cómo se dice en inglés? (escribe)")});});
+  var G=shuffle(m.gaps);
+  G.slice(0,5).forEach(function(g){s2.push({t:"gap",g:g,sheet:2,sec:S2("F. Completa la frase (elige)")});});
+  (G.length>8?G.slice(5,8):G.slice(-3)).forEach(function(g){s2.push({t:"gaptype",g:g,sheet:2,sec:S2("G. Completa la frase (escribe)")});});
   var sen=shuffle(m.sentences);
-  pickN(m.gaps,6).forEach(function(g){s2.push({t:"gap",g:g,sheet:2,sec:S2("E. Completa la frase")});});
-  sen.slice(0,4).forEach(function(x){s2.push({t:"order",s:x,sheet:2,sec:S2("F. Ordena la frase")});});
-  shuffle(m.seqs||[]).slice(0,1).forEach(function(x){s2.push({t:"seq",s:{en:x.en,es:x.es},title:x.title,sheet:2,sec:S2("F2. Ordena la lista")});});
-  sen.slice(-4).forEach(function(x){s2.push({t:"dictation",s:x,sheet:2,sec:S2("G. Dictado")});});
-  var qa=shuffle(m.qa);
-  qa.slice(0,3).forEach(function(q){s2.push({t:"qachoose",q:q,sheet:2,sec:S2("H. Pregunta y respuesta (elige)")});});
-  qa.slice(-3).forEach(function(q){s2.push({t:"qatype",q:q,sheet:2,sec:S2("I. Pregunta y respuesta (escribe)")});});
-  var sc=shuffle(m.scenes);
-  sc.slice(0,3).forEach(function(x){s2.push({t:"scenechoose",sc:x,sheet:2,sec:S2("J. Mira el dibujo y responde (elige)")});});
-  sc.slice(-3).forEach(function(x){s2.push({t:"scenetype",sc:x,sheet:2,sec:S2("K. Mira el dibujo y responde (escribe)")});});
-  var intro1={t:"examintro",title:"📄 Hoja 1 (por delante): Vocabulario",text:"Tienes <b>una sola oportunidad</b> en cada pregunta. No hay ayudas y la corrección sale <b>al final</b>. Las preguntas se leen en voz alta y puedes pulsar 🔊 para oírlas otra vez.",sheet:1};
-  var intro2={t:"examintro",title:"📄 Hoja 2 (por detrás): Frases y preguntas",text:"¡Gira la hoja! Ahora vienen frases, dictado y preguntas con dibujos. Misma regla: una oportunidad por pregunta.",sheet:2};
+  sen.slice(0,4).forEach(function(x){s2.push({t:"esorder",s:x,x:extrasFor(x.en,m.sentences),sheet:2,sec:S2("H. Ordena la frase (sobran palabras)")});});
+  sen.slice(-4).forEach(function(x){s2.push({t:"esquiz",s:x,o:esquizOpts(x,m.sentences),sheet:2,sec:S2("I. ¿Cómo se dice esta frase en inglés?")});});
+  shuffle(m.seqs||[]).slice(0,1).forEach(function(x){s2.push({t:"seq",s:{en:x.en,es:x.es},title:x.title,sheet:2,sec:S2("J. Ordena la lista")});});
+  var qa1=qaPick(m.qa,3),qa2=qaPick(m.qa,3,qa1);
+  qa1.forEach(function(q){s2.push({t:"qachoose",q:q,sheet:2,sec:S2("K. Pregunta y respuesta (elige)")});});
+  qa2.forEach(function(q){s2.push({t:"qatype",q:q,sheet:2,sec:S2("L. Pregunta y respuesta (escribe)")});});
+  var sc1=pickYN(m.scenes,3),sc2=pickYN(m.scenes.filter(function(x){return sc1.indexOf(x)<0;}),3);
+  sc1.forEach(function(x){s2.push({t:"scenechoose",sc:x,sheet:2,sec:S2("M. Mira el cuadro y responde (elige)")});});
+  sc2.forEach(function(x){s2.push({t:"scenetype",sc:x,sheet:2,sec:S2("N. Mira el cuadro y responde (escribe)")});});
+  var intro1={t:"examintro",title:"📄 Hoja 1 (por delante): Vocabulario",text:"Tienes <b>una sola oportunidad</b> en cada pregunta. No hay ayudas y la corrección sale <b>al final</b>. Puedes dejar una pregunta en blanco si no la sabes.",sheet:1};
+  var intro2={t:"examintro",title:"📄 Hoja 2 (por detrás): Frases y preguntas",text:"¡Gira la hoja! Ahora vienen frases y preguntas. Fíjate: en algunos ejercicios <b>sobran palabras</b>. Misma regla: una oportunidad por pregunta.",sheet:2};
   s1=filterLv(s1);s2=filterLv(s2);
   if(s1.length)steps=steps.concat([intro1],s1);
   if(s2.length)steps=steps.concat([intro2],s2);
@@ -2288,24 +2595,34 @@ function buildExam(m){
 function startExam(sel){
   var m=mergeLessons(sel),steps=buildExam(m);
   if(steps.filter(function(x){return x.t!=="examintro";}).length<5)return false;
-  L={title:"Prueba final 📝",les:m,steps:steps,i:0,stars:0,part:"exam",exam:true,examLog:[],examBusy:false,only:null,plan:sel};renderStep();return true;
+  L={title:"Prueba final 📝",les:m,steps:steps,i:0,stars:0,part:"exam",exam:true,examLog:[],examBusy:false,only:null,plan:sel,rkey:"exam:"+(sel.grp||"libre"),rpart:"exam"};
+  rsPut(L.rkey,null);renderStep();return true;
 }
 R.examintro=function(st){
   shell('<div class="card center"><h2>'+st.title+'</h2><p style="font-size:19px;line-height:1.5">'+st.text+'</p><button class="green" id="exgo">¡Empezar!</button></div>');
   $("exgo").onclick=function(){if(L.examBusy)return;L.examBusy=true;examAdvance(null);};
 };
+function examGiven(){
+  var a=main.querySelector("#ans");if(a&&a.value.trim())return a.value.trim();
+  var t=[].slice.call(main.querySelectorAll("#slot .tile")).map(function(x){return x.textContent;});if(t.length)return t.join(" ");
+  var lb=main.querySelector(".lbox");
+  if(lb){var o="";[].slice.call(lb.childNodes).forEach(function(c){o+=(c.tagName==="INPUT"?(c.value||"_"):c.textContent);});return o;}
+  var op=main.querySelector(".opt.nope,.pick.nope");if(op)return op.getAttribute("data-v")||op.textContent;
+  return "";
+}
 function examHit(ok){
   if(!L||!L.exam||L.examBusy)return;
   var st=L.steps[L.i];if(!st||st.t==="examintro")return;
+  L.examGiven=ok?"":examGiven();
   L.examBusy=true;
   main.querySelectorAll(".card input,.card .opt,.card .pick,.card .tile,.card #chk,.card #clr,.card .lt").forEach(function(x){x.disabled=true;});
   showToast("✔ Guardado","ok");
-  setTimeout(function(){examAdvance(ok?1:0);},650);
+  setTimeout(function(){examAdvance(ok?1:0,L&&L.examGiven);},650);
 }
-function examAdvance(credit){
+function examAdvance(credit,given){
   var st=L.steps[L.i];
-  if(st.t!=="examintro")L.examLog.push({st:st,credit:credit||0});
-  markDay();L.examBusy=false;L.i++;
+  if(st.t!=="examintro")L.examLog.push({st:st,credit:credit||0,given:given||""});
+  markDay();L.examBusy=false;L.examGiven="";L.i++;rsSave();
   if(L.i>=L.steps.length)return examResults();
   renderStep();
 }
@@ -2344,8 +2661,9 @@ function matchExam(st){
   };});
   $("exdone").onclick=function(){
     if(L.examBusy)return;L.examBusy=true;
-    var ok=0;Object.keys(pairs).forEach(function(pk){if(pairs[pk]===pk)ok++;});
-    examAdvance(ok/words.length);
+    var ok=0,bad=[];Object.keys(pairs).forEach(function(pk){if(pairs[pk]===pk)ok++;else{var pw=words.filter(function(w){return w[0]===pk;})[0];bad.push(emo(pw?pw[2]:"")+" → "+pairs[pk]);}});
+    var miss=words.length-Object.keys(pairs).length;
+    examAdvance(ok/words.length,bad.join("  ·  ")+(miss>0?(bad.length?"  ·  ":"")+miss+" sin unir":""));
   };
 }
 function addWeakOnly(st){
@@ -2354,9 +2672,82 @@ function addWeakOnly(st){
   var ex=PROG.weak.filter(function(x){return stepKey(x)===k;})[0];
   if(ex){ex.ok=0;return;}
   var c=JSON.parse(JSON.stringify(st));delete c.queued;delete c.rep;delete c.sec;delete c.sheet;c.ok=0;
-  c.lid=stepLid(st)||null;PROG.weak.push(c);if(PROG.weak.length>60)PROG.weak.shift();
+  c.lid=lidFor(st);PROG.weak.push(c);if(PROG.weak.length>60)PROG.weak.shift();
+}
+function examQ(st){
+  var t=st.t;
+  if(t==="match")return "Unir cada dibujo con su palabra";
+  if(t==="write")return "Escribe lo que ves: "+emo(st.w[2])+" ("+st.w[1]+")";
+  if(t==="letters")return "Completa las letras: "+emo(st.w[2])+" ("+st.w[1]+")";
+  if(t==="es2en"||t==="es2pick")return "¿Cómo se dice «"+st.w[1]+"»?";
+  if(t==="gap"||t==="gaptype")return st.g.s;
+  if(t==="esorder"||t==="esquiz")return st.s.es;
+  if(t==="seq")return st.title;
+  if(t==="qachoose"||t==="qatype")return st.q.q;
+  if(t==="scenechoose"||t==="scenetype")return st.sc.q+" (mira el cuadro)";
+  return stepLabel(st).txt;
+}
+function examExpected(st){
+  var t=st.t;
+  if(t==="match")return st.words.map(function(w){return emo(w[2])+" "+w[0];}).join("  ·  ");
+  if(st.w)return st.w[0];
+  if(st.g)return st.g.s.replace("___",st.g.answer);
+  if(st.s)return st.s.en;
+  if(st.q)return st.q.answers.join("  /  ");
+  if(st.sc)return sceneAns(st.sc);
+  return stepLabel(st).txt;
+}
+
+function errHint(given,expected){
+  if(!given||!expected)return "";
+  function tk(t){return String(t).toLowerCase().replace(/[’`]/g,"'").replace(/[^a-z' ]+/g," ").split(/\s+/).filter(Boolean);}
+  var g=tk(given),best=null;
+  String(expected).split(/\s\/\s/).forEach(function(e){
+    var t=tk(e);if(t.length!==g.length)return;
+    var d=[];for(var i=0;i<t.length;i++)if(t[i]!==g[i])d.push([g[i],t[i]]);
+    if(d.length===1&&(!best||true))best=best||d[0];
+  });
+  if(!best)return "";
+  var a=best[0],e=best[1],k=[a,e].sort().join("|");
+  var H={"any|some":e==="some"?"💡 Frase afirmativa → some":"💡 Negativa o pregunta → any",
+   "have|has":"💡 He / She / It → has · I / You / We / They → have",
+   "are|is":"💡 He / She / It → is · They / We / You → are",
+   "do|does":"💡 He / She / It → does · I / You / They → do",
+   "don't|doesn't":"💡 He / She / It → doesn't · I / You / They → don't",
+   "like|likes":"💡 He / She → likes · I / You / They → like",
+   "want|wants":"💡 He / She → wants · I / You / They → want",
+   "she|he":"💡 She = ella · He = él","it|she":"💡 It = cosa o animal · She = ella","he|it":"💡 It = cosa o animal · He = él",
+   "she|they":"💡 She = ella · They = ellos o ellas","he|they":"💡 He = él · They = ellos o ellas","it|they":"💡 It = uno (cosa) · They = varios"};
+  return H[k]||"";
+}
+function demoExamResult(sel){
+  if(!startExam(sel))return;
+  var steps=L.steps.filter(function(x){return x.t!=="examintro"&&x.t!=="roundend";}),n=0;
+  steps.forEach(function(st,i){
+    var ok=(i%3!==1),exp="",given="";
+    if(!ok){
+      try{exp=examExpected(st);}catch(e){exp="";}
+      var w=String(exp).split(/\s\/\s/)[0].split(" "),done=false;
+      for(var j=0;j<w.length&&!done;j++){var lw=w[j].toLowerCase().replace(/[.?!,]/g,""),sw=SWAP[lw]||(lw==="some"?"any":lw==="any"?"some":null);if(sw){w[j]=sw;done=true;}}
+      if(!done&&w.length&&w[0]){w[w.length-1]=w[w.length-1].slice(0,-1);}
+      given=(n%4===3)?"":w.join(" ");if(st.t==="match")given="";n++;
+    }
+    L.examLog.push({st:st,credit:ok?1:0,given:given});
+  });
+  L.i=L.steps.length;examResults();
+}
+function demoSeed(){
+  if(!DEMO||pload("et_demo",false))return;
+  var d={done:{}};for(var i=1;i<=55;i++)d.done[i]=1;psave("et_story",d);
+  starsData={total:320};psave("et_stars",starsData);updateStars();
+  var n=new Date();for(var k=0;k<6;k++){var x=new Date(n.getFullYear(),n.getMonth(),n.getDate()-k);PROG.days[dkey(x)]=1;}
+  ["scroll","trophy"].forEach(function(id){try{giveSticker(id,true);}catch(e){}});
+  try{var g=GROUPS[0],sel=groupSel(g,"all"),m=mergeLessons(sel),ss=buildExam(m).filter(function(x){return x.t!=="examintro"&&x.t!=="roundend";});
+    for(var j=0;j<ss.length&&PROG.weak.length<12;j+=3)addWeakOnly(ss[j]);}catch(e){}
+  psave("et_prog",PROG);psave("et_demo",true);
 }
 function examResults(){
+  if(L&&L.rkey)rsPut(L.rkey,null);
   document.body.classList.remove("exam");document.body.removeAttribute("data-st");
   var log=L.examLog,max=log.length,score=log.reduce(function(a,x){return a+x.credit;},0);
   var nota=max?Math.round(score/max*100)/10:0;
@@ -2378,11 +2769,11 @@ function examResults(){
   function bar(label,o){var pc=Math.round(o.s/o.n*100);return '<div class="bar"><span class="lab">'+esc(label)+'</span><span class="tr"><i class="'+(pc>=80?"hi":pc>=50?"mid":"")+'" style="width:'+pc+'%"></i></span><span class="pc">'+(Math.round(o.s*10)/10)+' / '+o.n+'</span></div>';}
   var shHtml=Object.keys(sheets).map(function(k){return bar("Hoja "+k+(k==="1"?" (delante)":" (detrás)"),sheets[k]);}).join("");
   var secHtml=Object.keys(secs).map(function(k){return bar(k.replace(/^Hoja \d · /,""),secs[k]);}).join("");
-  var errs=wrong.map(function(x){var lab=stepLabel(x.st);return '<li>'+esc(lab.txt)+(lab.say&&x.st.t!=="match"?' <button class="sp" data-say="'+esc(lab.say)+'">🔊</button>':"")+'</li>';}).join("");
+  var errs=wrong.map(function(x){var lab=stepLabel(x.st),g=x.given,eh=errHint(g,examExpected(x.st));
+    return '<li class="exerr"><div class="eq">'+esc(examQ(x.st))+'</div><div class="eg">✍️ Tú pusiste: '+(g?'<span class="gbad">'+esc(g)+'</span>':'<span class="gblank">(en blanco)</span>')+'</div><div class="ee">✅ Era: <b>'+esc(examExpected(x.st))+'</b>'+(lab.say&&x.st.t!=="match"?' <button class="sp" data-say="'+esc(lab.say)+'">🔊</button>':"")+'</div>'+(eh?'<div class="eh">'+esc(eh)+'</div>':"")+'</li>';}).join("");
   main.innerHTML='<div class="card center"><h2>📝 Resultado de la prueba</h2><div class="grade">'+String(nota).replace(".",",")+' / 10</div><p>'+esc(msg)+'</p><p class="small">'+(Math.round(score*10)/10)+' puntos de '+max+' preguntas</p></div>'+
     streakHtml(L.streakWin)+newStickersHtml(newStk)+
-    '<div class="card"><h2>📄 Por hojas</h2>'+shHtml+'<h2 style="margin-top:14px">📋 Por apartados</h2>'+secHtml+'</div>'+
-    (wrong.length?'<div class="card"><h2>🔁 Para corregir</h2><p class="small">Esto es lo que falló o dejó en blanco, con la respuesta correcta. Ya está guardado en <b>Repasar lo que no sé</b>.</p><ul class="clues">'+errs+'</ul></div>':'<div class="card center"><div class="fb ok">🌟 ¡Sin ningún error!</div></div>')+
+    (wrong.length?'<div class="card"><h2>🔁 Para corregir</h2><p class="small">Aquí ves lo que puso y lo que era correcto. Ya está guardado en <b>Repasar lo que no sé</b>.</p><ul class="clues">'+errs+'</ul></div>':'<div class="card center"><div class="fb ok">🌟 ¡Sin ningún error!</div></div>')+
     '<div class="center">'+(wrong.length?'<button class="red" id="exrev">🔁 Repasar errores</button>':'')+'<button class="green" id="exagain">Repetir prueba (otras preguntas)</button><button class="ghost" id="exhome">Inicio</button></div>';
   var sel=L.plan;
   if($("exrev"))$("exrev").onclick=startReview;
@@ -2899,46 +3290,46 @@ SD("🦁","The Zoo",[["🦓","We go to the zoo.","Vamos al zoo."],["🐒","I see
 ]);
 function P(en,es){return ["",en,es];}
 ETSTORIES([
-/*21*/SD("🐹","Tom's Pet",[P("Tom is nine years old. He lives in a small house with his mum and his sister.","Tom tiene nueve años. Vive en una casa pequeña con su mamá y su hermana."),P("Tom has a pet. It is a small brown hamster. His name is Nibbles.","Tom tiene una mascota. Es un hámster pequeño y marrón. Se llama Nibbles."),P("Nibbles likes carrots and apples, but he does not like lemons. At night, he runs and runs on his wheel.","A Nibbles le gustan las zanahorias y las manzanas, pero no le gustan los limones. Por la noche corre y corre en su rueda.")],
- [["How old is Tom?","¿Cuántos años tiene Tom?",["Nine","Ten","Seven"],0],["What is Nibbles?","¿Qué es Nibbles?",["A hamster","A cat","A rabbit"],0],["What does Nibbles NOT like?","¿Qué NO le gusta a Nibbles?",["Lemons","Carrots","Apples"],0]]),
-/*22*/SD("🎂","Lucy's Birthday",[P("Lucy's birthday is in May. It is on Saturday. She is very happy.","El cumpleaños de Lucy es en mayo. Es el sábado. Está muy contenta."),P("Her friends come to her house with presents. Mum makes a big chocolate cake.","Sus amigos vienen a su casa con regalos. Mamá hace una tarta grande de chocolate."),P("They sing 'Happy Birthday'. Lucy blows out the candles. Then everybody eats cake.","Cantan «Cumpleaños feliz». Lucy sopla las velas. Después todos comen tarta.")],
- [["When is Lucy's birthday?","¿Cuándo es el cumpleaños de Lucy?",["In May","In June","In March"],0],["What does Mum make?","¿Qué hace mamá?",["A chocolate cake","A pizza","An apple pie"],0],["Do her friends bring presents?","¿Sus amigos traen regalos?",["Yes, they do","No, they don't"],0]]),
-/*23*/SD("🥪","The Lunch Box",[P("Ben opens his lunch box at school. He has a sandwich, some crisps and an apple.","Ben abre su fiambrera en el colegio. Tiene un bocadillo, unas patatas fritas y una manzana."),P("He does not have any yoghurt today, and he is sad. His friend Anna has two yoghurts.","Hoy no tiene yogur y está triste. Su amiga Anna tiene dos yogures."),P("Anna gives one yoghurt to Ben. 'Thank you!' says Ben. Now he is happy.","Anna le da un yogur a Ben. «¡Gracias!», dice Ben. Ahora está contento.")],
- [["What does Ben have in his lunch box?","¿Qué tiene Ben en su fiambrera?",["A sandwich, crisps and an apple","A pizza and a banana","Some cake and milk"],0],["Does Ben have a yoghurt?","¿Tiene Ben un yogur?",["No, he doesn't","Yes, he does"],0],["Who gives him a yoghurt?","¿Quién le da un yogur?",["Anna","Lucy","Mum"],0]]),
-/*24*/SD("🌧️","A Rainy Saturday",[P("It is Saturday morning. It is rainy and cold. Sam and his dad cannot go to the park.","Es sábado por la mañana. Llueve y hace frío. Sam y su papá no pueden ir al parque."),P("They stay at home. Sam draws a big dragon, and Dad makes hot chocolate.","Se quedan en casa. Sam dibuja un dragón grande y papá hace chocolate caliente."),P("In the afternoon, the sun comes out. 'Let's go to the park!' says Sam.","Por la tarde sale el sol. «¡Vamos al parque!», dice Sam.")],
- [["What day is it?","¿Qué día es?",["Saturday","Sunday","Monday"],0],["What does Dad make?","¿Qué hace papá?",["Hot chocolate","Tea","A cake"],0],["What happens in the afternoon?","¿Qué pasa por la tarde?",["The sun comes out","It snows","It rains more"],0]]),
-/*25*/SD("🧥","Winter Clothes",[P("It is a cold day in winter. Emma puts on her blue jumper and her warm trousers.","Es un día frío de invierno. Emma se pone su jersey azul y sus pantalones de abrigo."),P("She wears a hat, a scarf and gloves. She does not wear a T-shirt.","Lleva un gorro, una bufanda y guantes. No lleva camiseta."),P("Her little brother wears shorts! 'You are crazy!' says Emma.","¡Su hermano pequeño lleva pantalones cortos! «¡Estás loco!», dice Emma.")],
- [["What season is it?","¿Qué estación es?",["Winter","Summer","Spring"],0],["What colour is Emma's jumper?","¿De qué color es el jersey de Emma?",["Blue","Red","Green"],0],["Who wears shorts?","¿Quién lleva pantalones cortos?",["Her brother","Emma","Her mum"],0]]),
-/*26*/SD("🐄","The Farm",[P("Mr Brown has a farm. There are three cows, five sheep and ten hens.","El señor Brown tiene una granja. Hay tres vacas, cinco ovejas y diez gallinas."),P("In the morning, he gives food to the animals. The hens give him eggs.","Por la mañana da de comer a los animales. Las gallinas le dan huevos."),P("There is also a big grey horse. Its name is Storm. The children love riding Storm.","También hay un caballo grande y gris. Se llama Storm. A los niños les encanta montar a Storm.")],
- [["How many cows are there?","¿Cuántas vacas hay?",["Three","Five","Ten"],0],["What do the hens give him?","¿Qué le dan las gallinas?",["Eggs","Milk","Wool"],0],["What is the horse's name?","¿Cómo se llama el caballo?",["Storm","Thunder","Rain"],0]]),
-/*27*/SD("🛒","At the Supermarket",[P("Mum and Jack are at the supermarket. They need some milk and some bread.","Mamá y Jack están en el supermercado. Necesitan leche y pan."),P("'Do we have any eggs?' asks Jack. 'No, we don't,' says Mum. 'Let's buy some.'","«¿Tenemos huevos?», pregunta Jack. «No», dice mamá. «Vamos a comprar.»"),P("They also buy tomatoes, cheese and a big watermelon. Jack carries the bag.","También compran tomates, queso y una sandía grande. Jack lleva la bolsa.")],
- [["What do they need?","¿Qué necesitan?",["Milk and bread","Cheese and ham","Fish and rice"],0],["Do they have any eggs at home?","¿Tienen huevos en casa?",["No, they don't","Yes, they do"],0],["Who carries the bag?","¿Quién lleva la bolsa?",["Jack","Mum","Dad"],0]]),
-/*28*/SD("🐈‍⬛","The Lost Cat",[P("Mia cannot find her cat. Its name is Pepper. Pepper is small and black.","Mia no encuentra a su gato. Se llama Pepper. Pepper es pequeño y negro."),P("Mia looks in the kitchen. She looks under the sofa. She looks in the garden. No cat!","Mia mira en la cocina. Mira debajo del sofá. Mira en el jardín. ¡Ni rastro del gato!"),P("Suddenly, she hears a noise. 'Meow!' Pepper is in Mia's school bag. He is asleep.","De repente oye un ruido. «¡Miau!» Pepper está en la mochila de Mia. Está dormido.")],
- [["What colour is Pepper?","¿De qué color es Pepper?",["Black","White","Brown"],0],["Where does Mia find Pepper?","¿Dónde encuentra Mia a Pepper?",["In her school bag","Under the sofa","In the garden"],0],["Is Pepper asleep?","¿Está Pepper dormido?",["Yes, he is","No, he isn't"],0]]),
-/*29*/SD("⚽","Football Practice",[P("On Tuesdays and Thursdays, Leo has football practice. He loves football.","Los martes y los jueves, Leo tiene entrenamiento de fútbol. Le encanta el fútbol."),P("His team is called the Red Lions. Their coach is Miss Green. She is very kind.","Su equipo se llama los Leones Rojos. Su entrenadora es la señorita Green. Es muy amable."),P("Today Leo scores two goals. His team wins three–one. Everybody shouts 'Hooray!'","Hoy Leo marca dos goles. Su equipo gana tres a uno. Todos gritan «¡Hurra!»")],
- [["Which days does Leo have practice?","¿Qué días tiene Leo entrenamiento?",["Tuesdays and Thursdays","Mondays and Fridays","Saturdays and Sundays"],0],["What is the team called?","¿Cómo se llama el equipo?",["The Red Lions","The Blue Birds","The Green Tigers"],0],["How many goals does Leo score?","¿Cuántos goles marca Leo?",["Two","Three","One"],0]]),
-/*30*/SD("🏖️","A Day at the Beach",[P("It is a hot day in August. Maria and her family go to the beach.","Es un día caluroso de agosto. María y su familia van a la playa."),P("Maria builds a sandcastle. Her dad swims in the sea. Her mum reads a book under an umbrella.","María construye un castillo de arena. Su papá nada en el mar. Su mamá lee un libro bajo una sombrilla."),P("At four o'clock, they eat ice cream. Maria's ice cream is strawberry. It is delicious!","A las cuatro toman helado. El helado de María es de fresa. ¡Está delicioso!")],
- [["Which month is it?","¿Qué mes es?",["August","July","December"],0],["What does Maria build?","¿Qué construye María?",["A sandcastle","A boat","A house"],0],["What flavour is Maria's ice cream?","¿De qué sabor es el helado de María?",["Strawberry","Chocolate","Lemon"],0]]),
-/*31*/SD("👧","The New Girl",[P("There is a new girl in class. Her name is Sofia and she is from Spain. She is shy.","Hay una niña nueva en clase. Se llama Sofía y es de España. Es tímida."),P("At break time, Sofia sits alone. Tom sees her and asks, 'Do you like football?' 'Yes, I do!' says Sofia.","En el recreo, Sofía se sienta sola. Tom la ve y le pregunta: «¿Te gusta el fútbol?» «¡Sí!», dice Sofía."),P("They play together. At the end of the day, Sofia is not shy any more. She has a new friend.","Juegan juntos. Al final del día, Sofía ya no es tímida. Tiene un amigo nuevo.")],
- [["Where is Sofia from?","¿De dónde es Sofía?",["Spain","England","France"],0],["What does Tom ask her?","¿Qué le pregunta Tom?",["Do you like football?","What is your name?","Are you hungry?"],0],["Is Sofia shy at the end of the day?","¿Es tímida Sofía al final del día?",["No, she isn't","Yes, she is"],0]]),
-/*32*/SD("🥧","Grandma's Kitchen",[P("On Sundays, Anna visits her grandma. Grandma lives in a little yellow house.","Los domingos, Anna visita a su abuela. La abuela vive en una casita amarilla."),P("There is always a delicious smell in the kitchen. Today Grandma makes an apple pie.","Siempre hay un olor delicioso en la cocina. Hoy la abuela hace una tarta de manzana."),P("Anna helps. She cuts the apples and puts them in the dish. Grandma puts the pie in the oven.","Anna ayuda. Corta las manzanas y las pone en el molde. La abuela mete la tarta en el horno."),P("After an hour, the pie is ready. It is hot and sweet. 'It's the best pie in the world!' says Anna.","Después de una hora, la tarta está lista. Está caliente y dulce. «¡Es la mejor tarta del mundo!», dice Anna.")],
- [["When does Anna visit her grandma?","¿Cuándo visita Anna a su abuela?",["On Sundays","On Fridays","On Mondays"],0],["What does Grandma make?","¿Qué hace la abuela?",["An apple pie","A chocolate cake","Pancakes"],0],["What does Anna cut?","¿Qué corta Anna?",["The apples","The bread","The cheese"],0]]),
-/*33*/SD("✏️","The Magic Pencil",[P("Oliver finds a pencil in the park. It is gold and very shiny.","Oliver encuentra un lápiz en el parque. Es dorado y muy brillante."),P("He draws a bird in his notebook. Suddenly, the bird opens its eyes and flies away!","Dibuja un pájaro en su cuaderno. ¡De repente, el pájaro abre los ojos y se va volando!"),P("Oliver draws a cake. A real cake is on the table! He is very surprised. 'This pencil is magic!' he says.","Oliver dibuja una tarta. ¡Hay una tarta de verdad sobre la mesa! Está muy sorprendido. «¡Este lápiz es mágico!», dice.")],
- [["What colour is the pencil?","¿De qué color es el lápiz?",["Gold","Silver","Blue"],0],["What does Oliver draw first?","¿Qué dibuja Oliver primero?",["A bird","A cake","A dog"],0],["What is on the table at the end?","¿Qué hay sobre la mesa al final?",["A real cake","A bird","A pencil"],0]]),
-/*34*/SD("🍂","The Four Seasons",[P("There are four seasons in a year: spring, summer, autumn and winter.","Hay cuatro estaciones en un año: primavera, verano, otoño e invierno."),P("In spring, flowers grow. In summer, it is hot and we go to the beach.","En primavera crecen las flores. En verano hace calor y vamos a la playa."),P("In autumn, the leaves are red and yellow. In winter, it is cold and sometimes it snows.","En otoño las hojas son rojas y amarillas. En invierno hace frío y a veces nieva.")],
- [["How many seasons are there?","¿Cuántas estaciones hay?",["Four","Three","Five"],0],["When are the leaves red and yellow?","¿Cuándo son las hojas rojas y amarillas?",["In autumn","In spring","In summer"],0],["In which season do we go to the beach?","¿En qué estación vamos a la playa?",["In summer","In winter","In autumn"],0]]),
-/*35*/SD("🩺","At the Doctor",[P("Pablo does not feel well today. He has a headache and a sore throat.","Pablo no se encuentra bien hoy. Le duele la cabeza y la garganta."),P("Mum takes him to the doctor. The doctor looks in his throat. 'Open your mouth, please,' she says.","Mamá lo lleva al médico. La doctora le mira la garganta. «Abre la boca, por favor», dice."),P("'You need to drink water and rest,' says the doctor. 'You can go back to school on Monday.'","«Tienes que beber agua y descansar», dice la doctora. «Puedes volver al colegio el lunes.»")],
- [["What is wrong with Pablo?","¿Qué le pasa a Pablo?",["A headache and a sore throat","A broken leg","A cold nose"],0],["Who takes him to the doctor?","¿Quién lo lleva al médico?",["Mum","Dad","His sister"],0],["When can he go back to school?","¿Cuándo puede volver al colegio?",["On Monday","Tomorrow","On Friday"],0]]),
-/*36*/SD("🧺","The Picnic",[P("It is a sunny Sunday in June. The Smith family goes for a picnic in the park.","Es un domingo soleado de junio. La familia Smith va de picnic al parque."),P("Dad carries the basket. Mum has a big blanket. The children carry the ball.","Papá lleva la cesta. Mamá lleva una manta grande. Los niños llevan la pelota."),P("In the basket there are sandwiches, bananas, orange juice and a chocolate cake.","En la cesta hay bocadillos, plátanos, zumo de naranja y una tarta de chocolate."),P("After lunch, they play football. Then a dog runs and takes the ball! Everybody laughs.","Después de comer juegan al fútbol. ¡Entonces un perro corre y se lleva la pelota! Todos se ríen.")],
- [["Which month is it?","¿Qué mes es?",["June","July","May"],0],["What does Dad carry?","¿Qué lleva papá?",["The basket","The blanket","The ball"],0],["Is there orange juice in the basket?","¿Hay zumo de naranja en la cesta?",["Yes, there is","No, there isn't"],0],["What does the dog take?","¿Qué se lleva el perro?",["The ball","A sandwich","The cake"],0]]),
-/*37*/SD("📚","The Library",[P("Every Wednesday, Zoe goes to the library after school. It is her favourite place.","Todos los miércoles, Zoe va a la biblioteca después del colegio. Es su lugar favorito."),P("She likes books about animals. Today she borrows a book about elephants.","Le gustan los libros de animales. Hoy se lleva prestado un libro sobre elefantes."),P("The librarian says, 'You can keep it for two weeks.' Zoe puts it carefully in her bag.","La bibliotecaria dice: «Puedes quedártelo dos semanas». Zoe lo guarda con cuidado en su mochila."),P("At home, she reads for an hour. 'Elephants are amazing!' she tells her mum.","En casa, lee durante una hora. «¡Los elefantes son increíbles!», le dice a su mamá.")],
- [["Which day does Zoe go to the library?","¿Qué día va Zoe a la biblioteca?",["Wednesday","Thursday","Tuesday"],0],["What is her book about?","¿De qué trata su libro?",["Elephants","Cats","Cars"],0],["How long can she keep the book?","¿Cuánto tiempo puede quedarse el libro?",["Two weeks","One day","Two months"],0],["How long does she read at home?","¿Cuánto lee en casa?",["An hour","Ten minutes","All night"],0]]),
-/*38*/SD("☂️","Mr Rain's Umbrella",[P("Mr Rain is a tall man with a very big umbrella. The umbrella is red with yellow dots.","El señor Rain es un hombre alto con un paraguas muy grande. El paraguas es rojo con lunares amarillos."),P("He takes it everywhere, even when it is sunny. People laugh at him, but he does not care.","Lo lleva a todas partes, incluso cuando hace sol. La gente se ríe de él, pero a él no le importa."),P("One day there is a terrible storm. The wind is strong and the rain is heavy. Nobody has an umbrella.","Un día hay una tormenta terrible. El viento es fuerte y la lluvia es intensa. Nadie tiene paraguas."),P("Mr Rain opens his big umbrella. Ten children stand under it. 'Thank you, Mr Rain!' they say.","El señor Rain abre su paraguas grande. Diez niños se ponen debajo. «¡Gracias, señor Rain!», dicen.")],
- [["What colour is the umbrella?","¿De qué color es el paraguas?",["Red with yellow dots","Blue with white dots","Green"],0],["Does Mr Rain take it when it is sunny?","¿Lo lleva el señor Rain cuando hace sol?",["Yes, he does","No, he doesn't"],0],["How many children stand under it?","¿Cuántos niños se ponen debajo?",["Ten","Two","Five"],0],["What is the weather in the storm?","¿Cómo es el tiempo en la tormenta?",["Windy and rainy","Hot and sunny","Cold and snowy"],0]]),
-/*39*/SD("🎁","The Birthday Surprise",[P("Today is Dad's birthday, but he thinks that everybody forgets it.","Hoy es el cumpleaños de papá, pero él cree que todos se han olvidado."),P("He is sad at breakfast. Mum only says 'Good morning', and the children go to school without a word.","Está triste en el desayuno. Mamá solo dice «Buenos días» y los niños se van al colegio sin decir nada."),P("When Dad comes home in the evening, the lights are off. Suddenly, 'Surprise!' shout his family and his friends.","Cuando papá vuelve a casa por la tarde, las luces están apagadas. De repente, su familia y sus amigos gritan: «¡Sorpresa!»"),P("There is a big cake with forty candles. Dad laughs and cries. 'This is the best birthday ever!' he says.","Hay una tarta grande con cuarenta velas. Papá ríe y llora. «¡Es el mejor cumpleaños de mi vida!», dice.")],
- [["Whose birthday is it?","¿De quién es el cumpleaños?",["Dad's","Mum's","The dog's"],0],["Why is Dad sad at breakfast?","¿Por qué está triste papá en el desayuno?",["He thinks everybody forgets","He is ill","He is late"],0],["How many candles are on the cake?","¿Cuántas velas hay en la tarta?",["Forty","Ten","Four"],0],["How does Dad feel at the end?","¿Cómo se siente papá al final?",["Very happy","Angry","Tired"],0]]),
-/*40*/SD("🦒","A Trip to the Zoo",[P("Class 4B goes to the zoo on Friday. The bus leaves at nine o'clock.","La clase 4B va al zoo el viernes. El autobús sale a las nueve."),P("First they see the monkeys. They jump and eat bananas. Then they see the tall giraffes. They eat leaves from the trees.","Primero ven a los monos. Saltan y comen plátanos. Luego ven a las jirafas altas. Comen hojas de los árboles."),P("At twelve o'clock, they have lunch near the lions. 'The lions are sleeping!' says Carla.","A las doce comen cerca de los leones. «¡Los leones están durmiendo!», dice Carla."),P("Before going home, they buy a small penguin toy in the shop. They are tired but happy.","Antes de volver a casa, compran un pequeño pingüino de juguete en la tienda. Están cansados pero contentos.")],
- [["Which day do they go to the zoo?","¿Qué día van al zoo?",["Friday","Monday","Saturday"],0],["What do the giraffes eat?","¿Qué comen las jirafas?",["Leaves","Bananas","Meat"],0],["What are the lions doing?","¿Qué hacen los leones?",["Sleeping","Running","Eating"],0],["What do they buy in the shop?","¿Qué compran en la tienda?",["A penguin toy","A monkey","A book"],0]]),
+/*21*/SD("🐹","Tom and Nibbles",[["🐹", "Tom has a pet. It is a small brown hamster. His name is Nibbles.", "Tom tiene una mascota. Es un hámster pequeño y marrón. Se llama Nibbles."], ["🥕🍎", "Nibbles likes carrots and apples. He does not like lemons.", "A Nibbles le gustan las zanahorias y las manzanas. No le gustan los limones."], ["🌙🐹", "At night, Nibbles is very busy. He runs and runs and runs.", "Por la noche, Nibbles está muy activo. Corre y corre y corre."], ["😴", "In the morning, Nibbles sleeps in his little bed. Tom says, \"Shh! Nibbles is sleeping.\"", "Por la mañana, Nibbles duerme en su camita. Tom dice: «¡Shh! Nibbles está durmiendo»."], ["❤️👦🐹", "Tom loves his hamster. They are best friends.", "Tom quiere a su hámster. Son mejores amigos."]],
+ [["What is Nibbles?", "¿Qué es Nibbles?", ["A hamster", "A cat", "A rabbit"], 0], ["What does Nibbles NOT like?", "¿Qué NO le gusta a Nibbles?", ["Lemons", "Carrots", "Apples"], 0], ["When is Nibbles busy?", "¿Cuándo está activo Nibbles?", ["At night", "In the morning"], 0], ["Are Tom and Nibbles friends?", "¿Tom y Nibbles son amigos?", ["Yes, they are.", "No, they aren't."], 0]]),
+/*22*/SD("🎂","Lucy's Birthday",[["🎈🎉", "Lucy's birthday is in May. It is on Saturday. She is very happy.", "El cumpleaños de Lucy es en mayo. Es el sábado. Está muy contenta."], ["🎁", "Her friends come to her house. They have big presents for Lucy.", "Sus amigos vienen a su casa. Traen regalos grandes para Lucy."], ["🎂", "Mum makes a big chocolate cake. It has nine candles.", "Mamá hace una tarta grande de chocolate. Tiene nueve velas."], ["🎶👧👦", "Everybody sings Happy Birthday. Lucy makes a wish.", "Todos cantan Cumpleaños feliz. Lucy pide un deseo."], ["😋🍰", "Then they eat the cake. It is sweet and delicious!", "Después se comen la tarta. ¡Es dulce y deliciosa!"]],
+ [["When is Lucy's birthday?", "¿Cuándo es el cumpleaños de Lucy?", ["In May", "In June", "In March"], 0], ["What kind of cake does Mum make?", "¿Qué tarta hace mamá?", ["Chocolate", "Strawberry", "Lemon"], 0], ["How many candles are there?", "¿Cuántas velas hay?", ["Nine", "Five", "Ten"], 0], ["Is the cake sweet?", "¿La tarta es dulce?", ["Yes, it is.", "No, it isn't."], 0]]),
+/*23*/SD("🥪","The Lunch Box",[["🎒", "Ben opens his school bag. He takes out his lunch box.", "Ben abre su mochila. Saca su fiambrera."], ["🥪", "In the lunch box there is a cheese sandwich. There is also a banana.", "En la fiambrera hay un bocadillo de queso. También hay un plátano."], ["🍎🥛", "Ben has an apple and a bottle of milk too. He is very hungry.", "Ben también tiene una manzana y una botella de leche. Tiene mucha hambre."], ["🐦", "A little bird looks at the sandwich. Ben gives it a small piece of bread.", "Un pajarito mira el bocadillo. Ben le da un trocito de pan."], ["😊", "The bird is happy. Ben is happy too. He eats the rest of his lunch.", "El pajarito está contento. Ben también está contento. Se come el resto de su almuerzo."]],
+ [["What is in the sandwich?", "¿Qué hay en el bocadillo?", ["Cheese", "Jam", "Chocolate"], 0], ["What does Ben drink?", "¿Qué bebe Ben?", ["Milk", "Water", "Juice"], 0], ["Who looks at the sandwich?", "¿Quién mira el bocadillo?", ["A bird", "A cat", "A dog"], 0], ["Does Ben give the bird some bread?", "¿Ben le da pan al pájaro?", ["Yes, he does.", "No, he doesn't."], 0]]),
+/*24*/SD("🌧️","A Rainy Saturday",[["🌧️", "It is Saturday morning. It is raining. Tom cannot play football.", "Es sábado por la mañana. Está lloviendo. Tom no puede jugar al fútbol."], ["😞", "Tom is sad. He looks out of the window. The sky is grey.", "Tom está triste. Mira por la ventana. El cielo está gris."], ["🎲", "His sister Anna has an idea. \"Let's play a board game!\" she says.", "Su hermana Anna tiene una idea. «¡Juguemos a un juego de mesa!», dice."], ["🍪🥛", "Mum makes hot chocolate and gives them some biscuits.", "Mamá prepara chocolate caliente y les da unas galletas."], ["😄", "They play all morning. Tom wins two games! Now he is happy.", "Juegan toda la mañana. ¡Tom gana dos partidas! Ahora está contento."]],
+ [["What is the weather like?", "¿Qué tiempo hace?", ["Rainy", "Sunny", "Hot"], 0], ["Who has an idea?", "¿Quién tiene una idea?", ["Anna", "Mum", "Tom"], 0], ["What do they eat?", "¿Qué comen?", ["Biscuits", "Pizza", "Apples"], 0], ["How many games does Tom win?", "¿Cuántas partidas gana Tom?", ["Two", "Three", "One"], 0]]),
+/*25*/SD("🧥","Winter Clothes",[["❄️", "It is a cold day in winter. There is snow in the garden.", "Es un día frío de invierno. Hay nieve en el jardín."], ["🧣🧤", "Sara wants to play outside. She puts on her scarf and her gloves.", "Sara quiere jugar fuera. Se pone la bufanda y los guantes."], ["🧥", "She wears a warm red coat. It is big and soft.", "Lleva un abrigo rojo y calentito. Es grande y suave."], ["👢", "Then she puts on her boots. Her feet are warm and dry.", "Luego se pone las botas. Sus pies están calentitos y secos."], ["⛄", "Sara makes a snowman. She gives him her old hat. \"Hello, Mr Snow!\" she says.", "Sara hace un muñeco de nieve. Le da su sombrero viejo. «¡Hola, señor Nieve!», dice."]],
+ [["What is the weather like?", "¿Qué tiempo hace?", ["Cold", "Hot", "Rainy"], 0], ["What colour is Sara's coat?", "¿De qué color es el abrigo de Sara?", ["Red", "Blue", "Green"], 0], ["What does Sara make?", "¿Qué hace Sara?", ["A snowman", "A cake", "A bike"], 0], ["Does Sara wear a scarf?", "¿Sara lleva bufanda?", ["Yes, she does.", "No, she doesn't."], 0]]),
+/*26*/SD("🐄","On the Farm",[["🚜", "Mr Brown has a farm. It is big and green.", "El señor Brown tiene una granja. Es grande y verde."], ["🐄", "There are three cows. They eat grass and give milk.", "Hay tres vacas. Comen hierba y dan leche."], ["🐔🥚", "There are five hens. They give eggs every morning.", "Hay cinco gallinas. Dan huevos cada mañana."], ["🐑", "There are two sheep. They are white and very soft.", "Hay dos ovejas. Son blancas y muy suaves."], ["🐴", "There is also a big brown horse. His name is Star. Mr Brown loves his farm.", "También hay un caballo marrón grande. Se llama Star. Al señor Brown le encanta su granja."]],
+ [["How many cows are there?", "¿Cuántas vacas hay?", ["Three", "Five", "Two"], 0], ["What do the hens give?", "¿Qué dan las gallinas?", ["Eggs", "Milk", "Meat"], 0], ["What colour are the sheep?", "¿De qué color son las ovejas?", ["White", "Black", "Brown"], 0], ["What is the horse's name?", "¿Cómo se llama el caballo?", ["Star", "Max", "Tom"], 0]]),
+/*27*/SD("🛒","At the Supermarket",[["🛒", "Mum and Jack are at the supermarket. They have a big shopping list.", "Mamá y Jack están en el supermercado. Tienen una lista de la compra grande."], ["🍞🥛", "First, they buy bread and milk. Jack puts them in the trolley.", "Primero compran pan y leche. Jack los pone en el carrito."], ["🍅🥕", "Then they go to the vegetables. They buy tomatoes and carrots.", "Luego van a las verduras. Compran tomates y zanahorias."], ["🍫", "Jack sees some chocolate. \"Can I have some chocolate, please?\" he asks.", "Jack ve chocolate. «¿Puedo tomar chocolate, por favor?», pregunta."], ["😊", "Mum says, \"Yes, you can!\" Jack is very happy.", "Mamá dice: «¡Sí, puedes!». Jack está muy contento."]],
+ [["Where are Mum and Jack?", "¿Dónde están mamá y Jack?", ["At the supermarket", "At school", "At the park"], 0], ["What do they buy first?", "¿Qué compran primero?", ["Bread and milk", "Eggs", "Apples"], 0], ["What does Jack ask for?", "¿Qué pide Jack?", ["Chocolate", "Crisps", "Biscuits"], 0], ["Can Jack have some chocolate?", "¿Puede Jack tomar chocolate?", ["Yes, he can.", "No, he can't."], 0]]),
+/*28*/SD("🐈‍⬛","The Lost Cat",[["🐈‍⬛", "Mia has a black cat. His name is Coco.", "Mia tiene un gato negro. Se llama Coco."], ["😟", "One day, Coco is not at home. Mia cannot find him.", "Un día, Coco no está en casa. Mia no puede encontrarlo."], ["🔍", "She looks under the sofa. She looks in the kitchen. No Coco.", "Mira debajo del sofá. Mira en la cocina. No hay Coco."], ["🌳🐈‍⬛", "Then she hears a small \"Meow!\" Coco is in the garden, up in a tree.", "Entonces oye un pequeño «¡Miau!». Coco está en el jardín, arriba en un árbol."], ["👨😸", "Dad gets a ladder and takes Coco down. Coco is safe. Mia hugs her cat.", "Papá trae una escalera y baja a Coco. Coco está a salvo. Mia abraza a su gato."]],
+ [["What colour is Coco?", "¿De qué color es Coco?", ["Black", "White", "Brown"], 0], ["Where is Coco?", "¿Dónde está Coco?", ["In a tree", "Under the sofa", "In the kitchen"], 0], ["Who takes Coco down?", "¿Quién baja a Coco?", ["Dad", "Mum", "Mia"], 0], ["Is Coco safe now?", "¿Coco está a salvo ahora?", ["Yes, he is.", "No, he isn't."], 0]]),
+/*29*/SD("⚽","Football Practice",[["⚽", "On Tuesdays and Thursdays, Leo has football practice. He loves it.", "Los martes y los jueves, Leo tiene entrenamiento de fútbol. Le encanta."], ["👟👕", "He puts on his football boots and his green shirt.", "Se pone las botas de fútbol y su camiseta verde."], ["🏃⚽", "The coach says, \"Run, run!\" The boys run around the field.", "El entrenador dice: «¡Corred, corred!». Los niños corren alrededor del campo."], ["🥅", "Leo kicks the ball and scores a goal. \"Goal!\" shouts the team.", "Leo chuta el balón y marca un gol. «¡Gol!», grita el equipo."], ["💧😅", "After practice, Leo is tired and thirsty. He drinks some water.", "Después del entrenamiento, Leo está cansado y tiene sed. Bebe un poco de agua."]],
+ [["When does Leo have practice?", "¿Cuándo entrena Leo?", ["On Tuesdays and Thursdays", "On Mondays", "On Fridays"], 0], ["What colour is his shirt?", "¿De qué color es su camiseta?", ["Green", "Red", "Blue"], 0], ["What does Leo score?", "¿Qué marca Leo?", ["A goal", "A cake", "A prize"], 0], ["What does he drink?", "¿Qué bebe?", ["Water", "Milk", "Juice"], 0]]),
+/*30*/SD("🏖️","A Day at the Beach",[["☀️🏖️", "It is a hot day. The family goes to the beach.", "Es un día caluroso. La familia va a la playa."], ["🧴", "Mum puts sun cream on the children. \"The sun is very strong,\" she says.", "Mamá pone crema solar a los niños. «El sol está muy fuerte», dice."], ["🏰", "Emma and her brother build a big sandcastle. It has a tall tower.", "Emma y su hermano construyen un castillo de arena grande. Tiene una torre alta."], ["🌊", "Then they swim in the sea. The water is cold but nice.", "Luego nadan en el mar. El agua está fría pero agradable."], ["🍦", "At the end, Dad buys ice creams. Emma has a strawberry ice cream.", "Al final, papá compra helados. Emma toma un helado de fresa."]],
+ [["What is the weather like?", "¿Qué tiempo hace?", ["Hot", "Cold", "Rainy"], 0], ["What do Emma and her brother build?", "¿Qué construyen Emma y su hermano?", ["A sandcastle", "A house", "A boat"], 0], ["Is the water cold or hot?", "¿El agua está fría o caliente?", ["Cold", "Hot"], 0], ["Which ice cream does Emma have?", "¿Qué helado toma Emma?", ["Strawberry", "Chocolate", "Lemon"], 0]]),
+/*31*/SD("👧","The New Girl",[["🏫", "There is a new girl in class. Her name is Nadia.", "Hay una niña nueva en la clase. Se llama Nadia."], ["😳", "Nadia is shy. She does not say anything. She sits at the back.", "Nadia es tímida. No dice nada. Se sienta atrás."], ["👧💬", "At break, Sofia says, \"Hello! I am Sofia. Do you like drawing?\"", "En el recreo, Sofía dice: «¡Hola! Soy Sofía. ¿Te gusta dibujar?»"], ["🎨🌈", "\"Yes, I do!\" says Nadia. They draw a big rainbow together.", "«¡Sí, me gusta!», dice Nadia. Dibujan juntas un arcoíris grande."], ["🤝😊", "Now Nadia and Sofia are friends. Nadia is not shy any more.", "Ahora Nadia y Sofía son amigas. Nadia ya no es tímida."]],
+ [["What is the new girl's name?", "¿Cómo se llama la niña nueva?", ["Nadia", "Sofia", "Anna"], 0], ["Is Nadia shy at first?", "¿Nadia es tímida al principio?", ["Yes, she is.", "No, she isn't."], 0], ["What do the girls draw?", "¿Qué dibujan las niñas?", ["A rainbow", "A cat", "A house"], 0], ["Are Nadia and Sofia friends now?", "¿Nadia y Sofía son amigas ahora?", ["Yes, they are.", "No, they aren't."], 0]]),
+/*32*/SD("🥧","Grandma's Kitchen",[["👵🏠", "On Sundays, Anna visits her grandma. Grandma's house is small and warm.", "Los domingos, Anna visita a su abuela. La casa de la abuela es pequeña y calentita."], ["🍎🥧", "Today they make an apple pie. Grandma has six big apples.", "Hoy hacen una tarta de manzana. La abuela tiene seis manzanas grandes."], ["🥚🥣", "Anna mixes the flour, the eggs and the sugar. Grandma cuts the apples.", "Anna mezcla la harina, los huevos y el azúcar. La abuela corta las manzanas."], ["⏰🥧", "Grandma puts the pie in the oven. It is hot, so Anna waits.", "La abuela mete la tarta en el horno. Está caliente, así que Anna espera."], ["😋🍨", "The pie smells delicious. They eat it with ice cream. \"Yummy!\" says Anna.", "La tarta huele deliciosa. Se la comen con helado. «¡Qué rica!», dice Anna."]],
+ [["When does Anna visit her grandma?", "¿Cuándo visita Anna a su abuela?", ["On Sundays", "On Mondays", "On Fridays"], 0], ["What do they make?", "¿Qué hacen?", ["An apple pie", "A chocolate cake", "Pizza"], 0], ["How many apples does Grandma have?", "¿Cuántas manzanas tiene la abuela?", ["Six", "Three", "Ten"], 0], ["What do they eat with the pie?", "¿Con qué se comen la tarta?", ["Ice cream", "Cheese", "Bread"], 0]]),
+/*33*/SD("✏️","The Magic Pencil",[["✏️", "Oliver finds a pencil in the park. It is gold and it shines.", "Oliver encuentra un lápiz en el parque. Es dorado y brilla."], ["🍎", "At home, he draws a red apple. Wow! The apple is real!", "En casa dibuja una manzana roja. ¡Guau! ¡La manzana es de verdad!"], ["🐶", "He draws a little dog. The dog says, \"Woof!\" and jumps on the bed.", "Dibuja un perrito. El perrito dice «¡Guau!» y salta a la cama."], ["🎂", "He draws a big cake for his mum. It is chocolate and has ten candles.", "Dibuja una tarta grande para su mamá. Es de chocolate y tiene diez velas."], ["😴", "Oliver is tired. He puts the magic pencil under his pillow and sleeps.", "Oliver está cansado. Pone el lápiz mágico debajo de la almohada y duerme."]],
+ [["Where does Oliver find the pencil?", "¿Dónde encuentra Oliver el lápiz?", ["In the park", "At school", "In the garden"], 0], ["What colour is the pencil?", "¿De qué color es el lápiz?", ["Gold", "Blue", "Black"], 0], ["What does he draw first?", "¿Qué dibuja primero?", ["An apple", "A dog", "A cake"], 0], ["Who is the cake for?", "¿Para quién es la tarta?", ["His mum", "His dad", "His teacher"], 0]]),
+/*34*/SD("🍂","The Four Seasons",[["🌸☀️🍂❄️", "There are four seasons in a year: spring, summer, autumn and winter.", "Hay cuatro estaciones en un año: primavera, verano, otoño e invierno."], ["🌸", "In spring, the flowers grow. The weather is warm and sometimes rainy.", "En primavera crecen las flores. El tiempo es templado y a veces llueve."], ["🏖️", "In summer, it is hot and sunny. We go to the beach and eat ice cream.", "En verano hace calor y sol. Vamos a la playa y comemos helado."], ["🍂", "In autumn, the leaves are yellow and brown. They fall from the trees.", "En otoño, las hojas son amarillas y marrones. Caen de los árboles."], ["⛄❄️", "In winter, it is cold. Sometimes it snows. My favourite season is summer!", "En invierno hace frío. A veces nieva. ¡Mi estación favorita es el verano!"]],
+ [["How many seasons are there in a year?", "¿Cuántas estaciones hay en un año?", ["Four", "Three", "Six"], 0], ["In which season is it hot and sunny?", "¿En qué estación hace calor y sol?", ["Summer", "Winter", "Autumn"], 0], ["What colour are the leaves in autumn?", "¿De qué color son las hojas en otoño?", ["Yellow and brown", "Green", "Pink"], 0], ["What is the writer's favourite season?", "¿Cuál es la estación favorita de quien escribe?", ["Summer", "Winter", "Spring"], 0]]),
+/*35*/SD("🩺","At the Doctor",[["🤒", "Pablo does not feel well. He has a headache and a sore throat.", "Pablo no se encuentra bien. Le duele la cabeza y la garganta."], ["🏥", "Mum takes him to the doctor. The doctor is kind. Her name is Dr Lopez.", "Mamá lo lleva al médico. La doctora es amable. Se llama doctora López."], ["🩺", "\"Open your mouth, please,\" says the doctor. She looks at his throat.", "«Abre la boca, por favor», dice la doctora. Le mira la garganta."], ["🌡️", "\"You have a fever,\" she says. \"Drink water, eat soup and rest.\"", "«Tienes fiebre», dice. «Bebe agua, toma sopa y descansa.»"], ["🛏️😊", "After three days, Pablo feels better. He goes back to school. He is happy!", "Después de tres días, Pablo se siente mejor. Vuelve al colegio. ¡Está contento!"]],
+ [["Who takes Pablo to the doctor?", "¿Quién lleva a Pablo al médico?", ["Mum", "Dad", "Grandma"], 0], ["What does the doctor say Pablo must drink?", "¿Qué dice la doctora que debe beber Pablo?", ["Water", "Cola", "Coffee"], 0], ["How many days until Pablo feels better?", "¿Cuántos días pasan hasta que Pablo se siente mejor?", ["Three", "Ten", "One"], 0], ["Is Pablo happy at the end?", "¿Pablo está contento al final?", ["Yes, he is.", "No, he isn't."], 0]]),
+/*36*/SD("🧺","The Picnic",[["☀️🧺", "It is a sunny Sunday in June. The Garcia family goes for a picnic.", "Es un domingo soleado de junio. La familia García va de picnic."], ["🌳", "They find a nice place under a big tree. Mum puts a blanket on the grass.", "Encuentran un buen sitio bajo un árbol grande. Mamá pone una manta sobre la hierba."], ["🥪🍇", "They have sandwiches, grapes and orange juice. Dad does not want any crisps.", "Tienen bocadillos, uvas y zumo de naranja. Papá no quiere patatas fritas."], ["🐜", "Oh no! Some ants come to the blanket. They want the biscuits too!", "¡Oh no! Llegan unas hormigas a la manta. ¡Ellas también quieren las galletas!"], ["⚽🌅", "They play with a ball all afternoon. It is a perfect day.", "Juegan con una pelota toda la tarde. Es un día perfecto."]],
+ [["What is the weather like?", "¿Qué tiempo hace?", ["Sunny", "Rainy", "Windy"], 0], ["What do they eat?", "¿Qué comen?", ["Sandwiches and grapes", "Pizza", "Fish"], 0], ["Does Dad want any crisps?", "¿Papá quiere patatas fritas?", ["No, he doesn't.", "Yes, he does."], 0], ["Who comes to the blanket?", "¿Quién llega a la manta?", ["Ants", "Birds", "Dogs"], 0]]),
+/*37*/SD("📚","The Library",[["📚", "Every Wednesday, Zoe goes to the library. It is her favourite place.", "Todos los miércoles, Zoe va a la biblioteca. Es su lugar favorito."], ["🤫📚", "The librarian is Mrs Hill. She says, \"Shh! Please, be quiet.\"", "La bibliotecaria es la señora Hill. Dice: «¡Shh! Por favor, silencio.»"], ["🐉📖", "Zoe takes a book about dragons. Dragons are big and green. They can fly.", "Zoe coge un libro sobre dragones. Los dragones son grandes y verdes. Pueden volar."], ["👧📖", "She sits down and reads for one hour. The story is very exciting.", "Se sienta y lee durante una hora. La historia es muy emocionante."], ["😊📚", "Zoe borrows the book. She can read it at home for two weeks.", "Zoe se lleva prestado el libro. Puede leerlo en casa durante dos semanas."]],
+ [["When does Zoe go to the library?", "¿Cuándo va Zoe a la biblioteca?", ["On Wednesdays", "On Fridays", "On Sundays"], 0], ["What does the librarian say?", "¿Qué dice la bibliotecaria?", ["Be quiet", "Run fast", "Sing"], 0], ["What is the book about?", "¿De qué trata el libro?", ["Dragons", "Cars", "Fish"], 0], ["How long can Zoe keep the book?", "¿Cuánto tiempo puede quedarse Zoe con el libro?", ["Two weeks", "Two days", "Ten days"], 0]]),
+/*38*/SD("☂️","The Big Umbrella",[["☂️", "Mr Rain is a tall man. He has a very big blue umbrella.", "El señor Rain es un hombre alto. Tiene un paraguas azul muy grande."], ["🌧️", "Every day, rain or sun, he takes his umbrella to work.", "Todos los días, llueva o haga sol, lleva su paraguas al trabajo."], ["🌧️👧👦", "One day, it rains a lot. Two children have no umbrella. They are wet and cold.", "Un día llueve mucho. Dos niños no tienen paraguas. Están mojados y tienen frío."], ["☂️👧👦", "\"Come here!\" says Mr Rain. The children stand under the big umbrella.", "«¡Venid aquí!», dice el señor Rain. Los niños se ponen bajo el paraguas grande."], ["🏠😊", "Now the umbrella is not too big. They all walk home together, happy and dry.", "Ahora el paraguas no es demasiado grande. Todos caminan juntos a casa, contentos y secos."]],
+ [["What colour is Mr Rain's umbrella?", "¿De qué color es el paraguas del señor Rain?", ["Blue", "Red", "Yellow"], 0], ["How many children have no umbrella?", "¿Cuántos niños no tienen paraguas?", ["Two", "Three", "One"], 0], ["Are the children wet and cold?", "¿Los niños están mojados y con frío?", ["Yes, they are.", "No, they aren't."], 0], ["Where do they walk?", "¿A dónde caminan?", ["Home", "To school", "To the park"], 0]]),
+/*39*/SD("🎁","Dad's Birthday Surprise",[["🎂", "Today is Dad's birthday. Mum, Ana and Pablo have a secret.", "Hoy es el cumpleaños de papá. Mamá, Ana y Pablo tienen un secreto."], ["🎈", "\"Shh!\" says Mum. They put balloons in the living room.", "«¡Shh!», dice mamá. Ponen globos en el salón."], ["🍋🍰", "Ana makes a lemon cake. Pablo draws a big card for Dad.", "Ana hace una tarta de limón. Pablo dibuja una tarjeta grande para papá."], ["🚪👨", "At six o'clock, Dad opens the door. \"Surprise! Happy birthday!\" they shout.", "A las seis, papá abre la puerta. «¡Sorpresa! ¡Feliz cumpleaños!», gritan."], ["🎁😊", "Dad is very happy. He opens his present. It is a new blue football shirt!", "Papá está muy contento. Abre su regalo. ¡Es una camiseta de fútbol azul nueva!"]],
+ [["What kind of cake does Ana make?", "¿Qué tarta hace Ana?", ["Lemon", "Chocolate", "Apple"], 0], ["Who draws the card?", "¿Quién dibuja la tarjeta?", ["Pablo", "Ana", "Mum"], 0], ["At what time does Dad open the door?", "¿A qué hora abre papá la puerta?", ["Six o'clock", "Seven o'clock", "Two o'clock"], 0], ["What is Dad's present?", "¿Cuál es el regalo de papá?", ["A football shirt", "A book", "A hat"], 0]]),
+/*40*/SD("🦒","A Trip to the Zoo",[["🚌", "Class 4B goes to the zoo by bus. The children are very excited.", "La clase 4B va al zoo en autobús. Los niños están muy emocionados."], ["🦒", "First, they see the giraffes. They are tall and yellow. They eat leaves from the trees.", "Primero ven las jirafas. Son altas y amarillas. Comen hojas de los árboles."], ["🐒🍌", "Next, they see the monkeys. The monkeys jump and eat bananas. They are funny!", "Luego ven los monos. Los monos saltan y comen plátanos. ¡Son graciosos!"], ["🦁", "Then they see a big lion. He is asleep. \"Shh!\" says the teacher.", "Después ven un león grande. Está dormido. «¡Shh!», dice la profesora."], ["🐧", "Last, they see the penguins. The penguins swim in the cold water. Nadia likes them best.", "Por último ven los pingüinos. Los pingüinos nadan en el agua fría. A Nadia le gustan más."]],
+ [["How does Class 4B go to the zoo?", "¿Cómo va la clase 4B al zoo?", ["By bus", "By car", "By train"], 0], ["What do the giraffes eat?", "¿Qué comen las jirafas?", ["Leaves", "Meat", "Fish"], 0], ["What does the lion do?", "¿Qué hace el león?", ["He sleeps", "He runs", "He swims"], 0], ["Which animal does Nadia like best?", "¿Qué animal le gusta más a Nadia?", ["Penguins", "Monkeys", "Lions"], 0]]),
 /*41*/SD("🤖","The Robot",[P("Max's uncle gives him a robot for his birthday. It is silver, and it can walk and talk.","El tío de Max le regala un robot por su cumpleaños. Es plateado y puede andar y hablar."),P("Its name is Beep. 'Hello, Max! I can help you,' says Beep. Max cannot believe it.","Se llama Beep. «¡Hola, Max! Puedo ayudarte», dice Beep. Max no se lo puede creer."),P("Beep tidies the room and brings Max his slippers. But it cannot cook, because it does not like water.","Beep ordena la habitación y le trae las zapatillas a Max. Pero no puede cocinar, porque no le gusta el agua."),P("In the evening, Max says, 'Good night, Beep.' 'Good night, Max,' says the robot, and its eyes turn off.","Por la noche, Max dice: «Buenas noches, Beep». «Buenas noches, Max», dice el robot, y sus ojos se apagan.")],
  [["What can the robot do?","¿Qué puede hacer el robot?",["Walk and talk","Fly and swim","Drive a car"],0],["What is the robot's name?","¿Cómo se llama el robot?",["Beep","Bop","Bing"],0],["Why can't it cook?","¿Por qué no puede cocinar?",["It does not like water","It is too small","It is asleep"],0],["What does Beep bring Max?","¿Qué le trae Beep a Max?",["His slippers","His school bag","His dinner"],0]]),
 /*42*/SD("🎭","The School Play",[P("The class is ready to perform a play about a dragon. Isabel is the dragon and Pau is the knight.","La clase está preparada para representar una obra sobre un dragón. Isabel es el dragón y Pau es el caballero."),P("Isabel is nervous. 'What if I forget my words?' she asks. Her teacher smiles and says, 'Breathe slowly. You can do it.'","Isabel está nerviosa. «¿Y si me olvido de mis palabras?», pregunta. Su profesora sonríe y dice: «Respira despacio. Tú puedes.»"),P("On the day of the play, the hall is full. Isabel takes a deep breath and walks onto the stage.","El día de la obra, el salón está lleno. Isabel respira hondo y sale al escenario."),P("She does not forget a single word. The audience claps for a long time. Isabel is very proud.","No se olvida ni una sola palabra. El público aplaude durante mucho rato. Isabel está muy orgullosa.")],
@@ -3091,6 +3482,7 @@ var PICTO={"ice cream":"🍦","hamster":"🐹","cat":"🐱","dog":"🐶","dogs":
  "umbrella":"☂️","bike":"🚲","bell":"🔔","key":"🔑","torch":"🔦","candles":"🕯️","tent":"⛺","fire":"🔥","book":"📖","books":"📚","pencil":"✏️","notebook":"📓","bag":"🎒","ball":"⚽","guitar":"🎸","lamps":"💡","rocket":"🚀","moon":"🌙","stars":"⭐","sun":"☀️","scarf":"🧣","gloves":"🧤","jumper":"🧥","trousers":"👖","shorts":"🩳","hat":"🧢","present":"🎁","presents":"🎁","door":"🚪","wind":"💨","sea":"🌊","lake":"🏞️","beach":"🏖️","school":"🏫","park":"🌳","house":"🏠","bus":"🚌","flowers":"🌸","roses":"🌹","sunflowers":"🌻","seed":"🌱","mum":"👩","dad":"👨","sister":"👧","brother":"👦","grandma":"👵","grandpa":"👴","girl":"👧","boy":"👦","doctor":"🧑‍⚕️","sandcastle":"🏰","football":"⚽","TV":"📺","phone":"📱","mouth":"👄","eyes":"👀","hand":"✋","snow":"❄️","prize":"🏆","race":"🏁","playground":"🛝","children":"🧒","sofa":"🛋️","lights":"💡","lamp":"💡","mountain":"⛰️","stone":"🪨","stones":"🪨","box":"📦","planets":"🪐","basket":"🧺","picnic":"🧺","bed":"🛏️","teacher":"🧑‍🏫","stars":"⭐","star":"⭐","fish":"🐟","tea":"🍵","chocolate":"🍫","juice":"🧃","water":"💧","rain":"🌧️","storm":"⛈️"};
 var PICTO_RE=new RegExp("\\b("+Object.keys(PICTO).sort(function(a,b){return b.length-a.length;}).join("|")+")\\b","gi");
 function pictoize(en){
+  return esc(en);
   return esc(en).replace(PICTO_RE,function(m){
     var k=m.toLowerCase(),e=PICTO[k]||PICTO[m];if(!e)return m;
     if(/^(snow)$/i.test(m)&&false)return m;
@@ -3195,7 +3587,7 @@ function storyLib(){
 }
 
 (function(){var h=document.querySelector('header h1');if(h)h.innerHTML=im('hlogo','hlogo2');var k=$('stkhead');if(k)k.innerHTML=im('bag1','hico');})();
-initProfiles();loadProfileData();updateStars();try{checkStickers(true);}catch(e){}
+initProfiles();loadProfileData();updateStars();try{demoSeed();}catch(e){}try{checkStickers(true);}catch(e){}
 if(PF.list.length>1)profileScreen();else home();
 </script>
 </body>
